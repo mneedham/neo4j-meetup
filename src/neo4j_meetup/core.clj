@@ -80,21 +80,55 @@
             (tx/execute transaction (map import-fn coll))]
         (println result)))))
 
-(defn tx-api-single [query]
-  (nr/connect! NEO4J_HOST)
-  (let [transaction (tx/begin-tx)]
-    (tx/with-transaction
-      transaction
-      true
-      (let [[_ result]
-            (tx/execute transaction
-                        [(tx/statement query)])]
-        (first result)))))
+(defn tx-api-single
+  ([query] (tx-api-single query {}))
+  ([query params]
+      (nr/connect! NEO4J_HOST)
+      (let [transaction (tx/begin-tx)]
+        (tx/with-transaction
+          transaction
+          true
+          (let [[_ result]
+                (tx/execute transaction
+                            [(tx/statement query params)])]
+            (first result))))))
 
-(defn link-credo-venues [query]
+(defn link-credo-venues []
   (tx-api-single "MATCH (v1:Venue {id: 9695352})
                   MATCH (v2:Venue {id: 10185422})
                   MERGE (v1)-[:ALIAS_OF]->(v2)"))
+
+(defn create-time-tree [start-year end-year]
+  (tx-api-single "
+    WITH range({start}, {end}) AS years, range(1,12) as months
+    FOREACH(year IN years | 
+      MERGE (y:Year {year: year})
+    FOREACH(month IN months | 
+      CREATE (m:Month {month: month})
+      MERGE (y)-[:HAS_MONTH]->(m)
+      FOREACH(day IN (CASE 
+                        WHEN month IN [1,3,5,7,8,10,12] THEN range(1,31) 
+                        WHEN month = 2 THEN 
+                          CASE
+                            WHEN year % 4 <> 0 THEN range(1,28)
+                            WHEN year % 100 <> 0 THEN range(1,29)
+                            WHEN year % 400 <> 0 THEN range(1,29)
+                            ELSE range(1,28)
+                          END
+                        ELSE range(1,30)
+                      END) |      
+        CREATE (d:Day {day: day})
+        MERGE (m)-[:HAS_DAY]->(d))))
+
+    WITH *
+    MATCH (year:Year)-[:HAS_MONTH]->(month)-[:HAS_DAY]->(day)
+    WITH year,month,day
+    ORDER BY year.year, month.month, day.day
+    WITH collect(day) as days
+    FOREACH(i in RANGE(0, length(days)-2) | 
+      FOREACH(day1 in [days[i]] | 
+        FOREACH(day2 in [days[i+1]] | 
+          CREATE UNIQUE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
 
 
 (comment (map :row
@@ -165,19 +199,36 @@
                  :guests (:guests rsvp)
                  }))
 
-(defn connect-linkedin []
-  (let [meetups
-        (mapcat :row (:data (tx-api-single "MATCH (n:MeetupProfile) RETURN n.name")))
-        profiles
-        (map #(str (:firstName %) " " (:lastName %)) (load "data/connections.json"))
-        members-with-profile
-        (clojure.set/intersection (set profiles) (set meetups))]
-    members-with-profile))
+(defn changed-mind? [rsvp]
+  (not (= (:created rsvp) (:mtime rsvp))))
+
+(defn responses [rsvp]
+  (if (changed-mind? rsvp)
+    (if (= "yes" (:response rsvp))
+      [{:response (:response rsvp) :time (:created rsvp)}]
+      [{:response "yes" :time (:created rsvp)}
+       {:response (:response rsvp) :time (:mtime rsvp)}])
+    [{:response (:response rsvp) :time (:created rsvp)}]))
+
+(defn rsvps-with-responses [rsvps]
+  (map #(assoc % :responses (responses %)) rsvps))
+
+(defn changed-mind [event-id rsvps]
+  (->> rsvps
+       (filter #(= (str event-id) (->> % :event :id)))
+       (filter #(not (= (:created %) (:mtime %))))))
+
+(def x
+  (changed-mind 170427882 (load "data/rsvps-2014-04-19.json")))
+
+(def y
+  (changed-mind 153596532 (load "data/rsvps-2014-04-19.json")))
 
 (defn load-into-neo4j []
+  (create-time-time 2011 2014)
   (tx-api create-member  (load "data/members.json"))
   (tx-api create-event  (load "data/events.json"))
-  (tx-api create-rsvp (load "data/rsvps.json")))
+  (tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-19.json"))))
 
 (defn main []
   (save "data/members.json" (get-all members))
