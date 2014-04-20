@@ -187,15 +187,32 @@
 (defn create-rsvp [rsvp]
   (tx/statement "MATCH (e:Event {id: {event}.id})
                  MATCH (m:MeetupProfile {id: {member}.member_id})
-                 MERGE (rsvp:RSVP {id: {id}})
-                 SET rsvp.response = {response}, rsvp.guests = {guests}
-                 MERGE (m)-[:RSVPD]->(rsvp)-[:TO]->(e)
-                 RETURN ID(rsvp)"
+                 FOREACH(response IN [{responses}[-1]] |
+                   CREATE (rsvp:RSVP {id: {id}})
+                   SET rsvp.response = response.response,
+                       rsvp.guests = response.guests,
+                       rsvp.time = response.time
+                   MERGE (m)-[:RSVPD]->(rsvp)-[:TO]->(e))
+                 FOREACH(response IN {responses}[..-1] |
+                   CREATE (rsvp:RSVP {id: {id}})
+                   SET rsvp.response = response.response,
+                       rsvp.guests = response.guests,
+                       rsvp.time = response.time
+                   MERGE (m)-[:INITIALLY_RSVPD]->(rsvp)-[:TO]->(e))
+                 WITH m, e
+                 MATCH (m)-[:INITIALLY_RSVPD|:RSVPD]->(rsvp)-[:TO]->(e)
+                 WITH rsvp
+                 ORDER BY rsvp.time
+                 WITH COLLECT(rsvp) AS rsvps
+                 FOREACH(i in RANGE(0, length(rsvps)-2) | 
+                   FOREACH(rsvp1 in [rsvps[i]] | 
+                     FOREACH(rsvp2 in [rsvps[i+1]] | 
+                       CREATE UNIQUE (rsvp1)-[:NEXT]->(rsvp2))))"
                 {:group (:group rsvp)
                  :event (:event rsvp)
                  :member (:member rsvp)
                  :id (:rsvp_id rsvp)
-                 :response (:response rsvp)
+                 :responses (:responses rsvp)
                  :guests (:guests rsvp)
                  }))
 
@@ -205,10 +222,10 @@
 (defn responses [rsvp]
   (if (changed-mind? rsvp)
     (if (= "yes" (:response rsvp))
-      [{:response (:response rsvp) :time (:created rsvp)}]
-      [{:response "yes" :time (:created rsvp)}
-       {:response (:response rsvp) :time (:mtime rsvp)}])
-    [{:response (:response rsvp) :time (:created rsvp)}]))
+      [{:response (:response rsvp) :time (:created rsvp) :guests (:guests rsvp)}]
+      [{:response "yes" :time (:created rsvp) :guests (:guests rsvp)}
+       {:response (:response rsvp) :time (:mtime rsvp) :guests 0}])
+    [{:response (:response rsvp) :time (:created rsvp) :guests (:guests rsvp)}]))
 
 (defn rsvps-with-responses [rsvps]
   (map #(assoc % :responses (responses %)) rsvps))
@@ -225,7 +242,7 @@
   (changed-mind 153596532 (load "data/rsvps-2014-04-19.json")))
 
 (defn load-into-neo4j []
-  (create-time-time 2011 2014)
+  (create-time-tree 2011 2014)
   (tx-api create-member  (load "data/members.json"))
   (tx-api create-event  (load "data/events.json"))
   (tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-19.json"))))
