@@ -90,3 +90,35 @@ FOREACH(i in RANGE(0, length(days)-2) |
 // get the previous 5 days 
 MATCH (y:Year {year: 2014})-[:HAS_MONTH]->(m:Month {month: 2})-[:HAS_DAY]->(:Day {day: 1})<-[:NEXT*0..5]-(day)
 RETURN y,m,day
+
+// which events have the most drop outs
+MATCH ()-[:INITIALLY_RSVPD]->(rsvp {response: "yes"})-[:TO]->(event)
+MATCH (rsvp)-[:NEXT]->(rsvp2 {response: "no"})
+RETURN event.id, event.name, COUNT(rsvp) AS rsvps
+ORDER BY rsvps DESC
+
+// events with the most dropouts
+
+MATCH ()-[:INITIALLY_RSVPD]->(rsvp {response: "yes"})-[:TO]->(event)
+MATCH (rsvp)-[:NEXT]->({response: "no"})
+WITH event, COUNT(rsvp) AS dropouts
+MATCH (event)<-[:TO]-({response: "yes"})<-[:RSVPD]-()
+RETURN event.id, event.name, COUNT(event) as finalRsvps, dropouts
+ORDER BY dropouts DESC
+
+// dropouts in intro to graphs
+MATCH ()-[:INITIALLY_RSVPD]->(rsvp {response: "yes"})-[:TO]->(event {name: "Intro to Graphs"})
+MATCH (rsvp)-[:NEXT]->({response: "no"})
+WITH event, COUNT(rsvp) AS dropouts
+MATCH (event)<-[:TO]-({response: "yes"})<-[:RSVPD]-()
+RETURN event.id, event.name, COUNT(event) as finalRsvps, dropouts
+ORDER BY dropouts DESC
+
+// attendees at events
+MATCH ()-[:INITIALLY_RSVPD]->(rsvp {response: "yes"})-[:TO]->(event)
+MATCH (rsvp)-[:NEXT]->({response: "no"})
+WITH event, COUNT(rsvp) AS dropouts
+MATCH (event)<-[:TO]-(rsvp {response: "yes"})<-[:RSVPD]-()
+WITH event, COUNT(event) as finalRsvps, SUM(rsvp.guests) AS guests, dropouts
+RETURN event.id, event.name, event.time, finalRsvps + guests AS potentialAttendees, dropouts
+ORDER BY dropouts DESC
