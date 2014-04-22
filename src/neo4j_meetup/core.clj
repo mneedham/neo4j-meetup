@@ -2,6 +2,8 @@
   (:require [clj-http.client :as client])
   (:require [clojure.data.json :as json])
   (:require [environ.core :as e])
+  (:require [clj-time.core :as t])
+  (:require [clj-time.coerce :as c])
   (:require [clojurewerkz.neocons.rest :as nr]
             [clojurewerkz.neocons.rest.transaction :as tx]))
 
@@ -130,12 +132,11 @@
         FOREACH(day2 in [days[i+1]] | 
           CREATE UNIQUE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
 
-
-(comment (map :row
-              (:data (tx-api-single "MATCH (n:MeetupProfile)
-                            RETURN n.name
-                            LIMIT 10"))))
-
+(defn as-timetree [timestamp]
+  (let [event-date (c/from-long timestamp)]
+    { :year (t/year event-date)
+      :month (t/month event-date)
+      :day (t/day event-date) }))
 
 (defn create-member [member]
   (let [social-media (:other_services member)
@@ -144,6 +145,11 @@
                     MERGE (m:MeetupProfile {id: {person}.id})
                     SET m = {person}
                     MERGE (p)-[:HAS_MEETUP_PROFILE]->(m)
+                    WITH p, m
+                    MATCH (year:Year {year: {timetree}.year })
+                    MATCH (year)-[:HAS_MONTH]->(month {month: {timetree}.month })
+                    MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
+                    CREATE (m)-[:JOINED_ON]->(day) 
                     FOREACH(topic IN {topics} |
                       MERGE (t:Topic {id: topic.id})
                       SET t = topic
@@ -156,15 +162,17 @@
                       "MERGE (linked:LinkedIn {id: {socialmedia}.linkedin.identifier })
                        MERGE (p)-[:HAS_LINKEDIN_ACCOUNT]->(linked) "
                       "")
-                    "RETURN ID(p)")]
-    (tx/statement query
-                  {:person {
-                            :id (:id member)
-                            :name (:name member)
-                            :bio (:bio member)
-                            }
-                   :socialmedia social-media
-                   :topics (:topics member)})))
+                    "RETURN ID(p)")
+        params {:person {
+                         :id (:id member)
+                         :name (:name member)
+                         :bio (:bio member)
+                         :joined (:joined member)
+                         }
+                :timetree (as-timetree (:joined member))
+                :socialmedia social-media
+                :topics (:topics member)}]
+    (tx/statement query params)))
 
 
 (defn create-event [event]
@@ -173,12 +181,18 @@
                  MERGE (e:Event {id: {event}.id})
                  SET e = {event}
                  MERGE (g)-[:HOSTED_EVENT]->(e)
+                 WITH e, g
+                 MATCH (year:Year {year: {timetree}.year })
+                 MATCH (year)-[:HAS_MONTH]->(month {month: {timetree}.month })
+                 MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
+                 CREATE (m)-[:JOINED_ON]->(day) 
                  MERGE (v:Venue {id: {venue}.id})
                  SET v = {venue}
                  MERGE (e)-[:HELD_AT]->(v)
                  RETURN ID(g)"
                 {:group (:group event)
                  :venue (:venue event)
+                 :timetree (as-timetree (:time event))              
                  :event { :id (:id event)
                          :name (:name event)
                          :description (:description event)
@@ -192,13 +206,21 @@
                    SET rsvp.response = response.response,
                        rsvp.guests = response.guests,
                        rsvp.time = response.time
-                   MERGE (m)-[:RSVPD]->(rsvp)-[:TO]->(e))
+                   MERGE (m)-[:RSVPD]->(rsvp)-[:TO]->(e)
+                   MERGE (year:Year {year: response.timetree.year })
+                   MERGE (year)-[:HAS_MONTH]->(month {month: response.timetree.month })
+                   MERGE (month)-[:HAS_DAY]->(day {day: response.timetree.day })
+                   MERGE (rsvp)-[:HAPPENED_ON]->(day))
                  FOREACH(response IN {responses}[..-1] |
                    CREATE (rsvp:RSVP {id: {id}})
                    SET rsvp.response = response.response,
                        rsvp.guests = response.guests,
                        rsvp.time = response.time
-                   MERGE (m)-[:INITIALLY_RSVPD]->(rsvp)-[:TO]->(e))
+                   MERGE (m)-[:INITIALLY_RSVPD]->(rsvp)-[:TO]->(e)
+                   MERGE (year:Year {year: response.timetree.year })
+                   MERGE (year)-[:HAS_MONTH]->(month {month: response.timetree.month })
+                   MERGE (month)-[:HAS_DAY]->(day {day: response.timetree.day })
+                   MERGE (rsvp)-[:HAPPENED_ON]->(day))
                  WITH m, e
                  MATCH (m)-[:INITIALLY_RSVPD|:RSVPD]->(rsvp)-[:TO]->(e)
                  WITH rsvp
@@ -222,10 +244,22 @@
 (defn responses [rsvp]
   (if (changed-mind? rsvp)
     (if (= "yes" (:response rsvp))
-      [{:response (:response rsvp) :time (:created rsvp) :guests (:guests rsvp)}]
-      [{:response "yes" :time (:created rsvp) :guests (:guests rsvp)}
-       {:response (:response rsvp) :time (:mtime rsvp) :guests 0}])
-    [{:response (:response rsvp) :time (:created rsvp) :guests (:guests rsvp)}]))
+      [{:response (:response rsvp)
+        :time (:created rsvp)
+        :timetree (as-timetree (:created rsvp))
+        :guests (:guests rsvp)}]
+      [{:response "yes"
+        :time (:created rsvp)
+        :timetree (as-timetree (:created rsvp))
+        :guests (:guests rsvp)}
+       {:response (:response rsvp)
+        :time (:mtime rsvp)
+        :timetree (as-timetree (:mtime rsvp))
+        :guests 0}])
+    [{:response (:response rsvp)
+      :time (:created rsvp)
+      :timetree (as-timetree (:created rsvp))      
+      :guests (:guests rsvp)}]))
 
 (defn rsvps-with-responses [rsvps]
   (map #(assoc % :responses (responses %)) rsvps))
@@ -235,20 +269,14 @@
        (filter #(= (str event-id) (->> % :event :id)))
        (filter #(not (= (:created %) (:mtime %))))))
 
-(def x
-  (changed-mind 170427882 (load "data/rsvps-2014-04-19.json")))
-
-(def y
-  (changed-mind 153596532 (load "data/rsvps-2014-04-19.json")))
-
 (defn load-into-neo4j []
   (create-time-tree 2011 2014)
-  (tx-api create-member  (load "data/members.json"))
-  (tx-api create-event  (load "data/events.json"))
-  (tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-19.json"))))
+  (tx-api create-member  (load "data/members-2014-04-22.json"))
+  (tx-api create-event  (load "data/events-2014-04-22.json"))
+  (tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-22.json"))))
 
 (defn main []
-  (save "data/members.json" (get-all members))
-  (save "data/events.json" (get-all events))
-  (save "data/rsvps.json" (mapcat #(get-all (partial rsvps %))
-                                  (map :id (load "data/events.json")))))
+  (save "data/members-2014-04-22.json" (get-all members))
+  (save "data/events-2014-04-22.json" (get-all events))
+  (save "data/rsvps-2014-04-22.json"
+        (mapcat #(get-all (partial rsvps %)) (map :id (load "data/events-2014-04-22.json")))))
