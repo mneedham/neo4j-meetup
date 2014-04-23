@@ -122,3 +122,32 @@ MATCH (event)<-[:TO]-(rsvp {response: "yes"})<-[:RSVPD]-()
 WITH event, COUNT(event) as finalRsvps, SUM(rsvp.guests) AS guests, dropouts
 RETURN event.id, event.name, event.time, finalRsvps + guests AS potentialAttendees, dropouts
 ORDER BY dropouts DESC
+
+// when do people change their response
+MATCH (meetup)-[:INITIALLY_RSVPD]->(rsvp1 {response: "yes"})-[:NEXT]->(rsvp2 {response: "no"})-[:TO]->(event)
+MATCH (event)-[:HAPPENED_ON]->(ed1)<-[:HAS_DAY]-(em1)<-[:HAS_MONTH]-(ey1)
+MATCH (rsvp1)-[:HAPPENED_ON]->(d1)<-[:HAS_DAY]-(m1)<-[:HAS_MONTH]-(y1)
+MATCH (rsvp2)-[:HAPPENED_ON]->(d2)<-[:HAS_DAY]-(m2)<-[:HAS_MONTH]-(y2)
+MATCH path = (d2)<-[:NEXT*]-(d1)
+RETURN meetup.name, 
+       event.name, 
+       ed1.day + "/" +  em1.month + "/" + ey1.year AS eventDate,
+       d1.day + "/" +  m1.month + "/" + y1.year AS initialYes,
+       d2.day + "/" +  m2.month + "/" + y2.year AS changedToNo,
+       LENGTH(path) AS days
+ORDER BY days DESC
+
+// changed response within 100 days of initial response
+MATCH (meetup:MeetupProfile)-[:INITIALLY_RSVPD]->(rsvp1 {response: "yes"})-[:NEXT]->(rsvp2 {response: "no"})-[:TO]->(event)
+MATCH (event)-[:HAPPENED_ON]->(ed1)<-[:HAS_DAY]-(em1)<-[:HAS_MONTH]-(ey1)
+MATCH (rsvp1)-[:HAPPENED_ON]->(d1)<-[:HAS_DAY]-(m1)<-[:HAS_MONTH]-(y1)
+MATCH (rsvp2)-[:HAPPENED_ON]->(d2)<-[:HAS_DAY]-(m2)<-[:HAS_MONTH]-(y2)
+WITH extract(p in (d2)<-[:NEXT*..100]-(d1) | length(p))[0] AS days,
+     meetup, 
+     event, 
+     ed1.day + "/" +  em1.month + "/" + ey1.year AS eventDate,
+     d1.day + "/" +  m1.month + "/" + y1.year AS initialYes,
+     d2.day + "/" +  m2.month + "/" + y2.year AS changedToNo
+WHERE NOT days is null
+RETURN meetup.name, event.name, eventDate, initialYes, changedToNo, days       
+ORDER BY days DESC

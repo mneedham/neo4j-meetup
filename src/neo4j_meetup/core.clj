@@ -185,7 +185,7 @@
                  MATCH (year:Year {year: {timetree}.year })
                  MATCH (year)-[:HAS_MONTH]->(month {month: {timetree}.month })
                  MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
-                 CREATE (m)-[:JOINED_ON]->(day) 
+                 CREATE (e)-[:HAPPENED_ON]->(day) 
                  MERGE (v:Venue {id: {venue}.id})
                  SET v = {venue}
                  MERGE (e)-[:HELD_AT]->(v)
