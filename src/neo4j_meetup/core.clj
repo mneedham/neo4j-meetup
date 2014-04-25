@@ -4,12 +4,12 @@
   (:require [environ.core :as e])
   (:require [clj-time.core :as t])
   (:require [clj-time.coerce :as c])
+  (:require [neo4j-meetup.db :as db])
   (:require [clojurewerkz.neocons.rest :as nr]
             [clojurewerkz.neocons.rest.transaction :as tx]))
 
 (def MEETUP_KEY (e/env :meetup-key))
 (def MEETUP_NAME "graphdb-london")
-(def NEO4J_HOST "http://localhost:7474/db/data/")
 
 (defn unchunk [s]
   (when (seq s)
@@ -72,36 +72,13 @@
 (defn load [file]
   (json/read-str (slurp file) :key-fn keyword))
 
-(defn tx-api [import-fn coll]
-  (nr/connect! NEO4J_HOST)
-  (let [transaction (tx/begin-tx)]
-    (tx/with-transaction
-      transaction
-      true
-      (let [[_ result]
-            (tx/execute transaction (map import-fn coll))]
-        (println result)))))
-
-(defn tx-api-single
-  ([query] (tx-api-single query {}))
-  ([query params]
-      (nr/connect! NEO4J_HOST)
-      (let [transaction (tx/begin-tx)]
-        (tx/with-transaction
-          transaction
-          true
-          (let [[_ result]
-                (tx/execute transaction
-                            [(tx/statement query params)])]
-            (first result))))))
-
 (defn link-credo-venues []
-  (tx-api-single "MATCH (v1:Venue {id: 9695352})
+  (db/tx-api-single "MATCH (v1:Venue {id: 9695352})
                   MATCH (v2:Venue {id: 10185422})
                   MERGE (v1)-[:ALIAS_OF]->(v2)"))
 
 (defn create-time-tree [start-year end-year]
-  (tx-api-single "
+  (db/tx-api-single "
     WITH range({start}, {end}) AS years, range(1,12) as months
     FOREACH(year IN years | 
       MERGE (y:Year {year: year})
@@ -196,7 +173,8 @@
                  :event { :id (:id event)
                          :name (:name event)
                          :description (:description event)
-                         :time (:time event)}}))
+                         :time (:time event)
+                         :utc_offset (:utc_offset event)}}))
 
 (defn create-rsvp [rsvp]
   (tx/statement "MATCH (e:Event {id: {event}.id})
@@ -271,9 +249,9 @@
 
 (defn load-into-neo4j []
   (create-time-tree 2011 2014)
-  (tx-api create-member  (load "data/members-2014-04-22.json"))
-  (tx-api create-event  (load "data/events-2014-04-22.json"))
-  (tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-22.json"))))
+  (db/tx-api create-member  (load "data/members-2014-04-22.json"))
+  (db/tx-api create-event  (load "data/events-2014-04-22.json"))
+  (db/tx-api create-rsvp (rsvps-with-responses (load "data/rsvps-2014-04-22.json"))))
 
 (defn main []
   (save "data/members-2014-04-22.json" (get-all members))

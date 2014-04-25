@@ -1,0 +1,32 @@
+(ns neo4j-meetup.db
+  (:require [clj-http.client :as client])
+  (:require [clojure.data.json :as json])
+  (:require [environ.core :as e])
+  (:require [clj-time.core :as t])
+  (:require [clj-time.coerce :as c])
+  (:require [clojurewerkz.neocons.rest :as nr]
+            [clojurewerkz.neocons.rest.transaction :as tx]))
+
+(def NEO4J_HOST "http://localhost:7474/db/data/")
+
+(defn tx-api [import-fn coll]
+  (nr/connect! NEO4J_HOST)
+  (let [transaction (tx/begin-tx)]
+    (tx/with-transaction
+      transaction
+      true
+      (let [[_ result]
+            (tx/execute transaction (map import-fn coll))]
+        (println result)))))
+
+(defn tx-api-single
+  ([query] (tx-api-single query {}))
+  ([query params]
+      (nr/connect! NEO4J_HOST)
+      (let [transaction (tx/begin-tx)]
+        (tx/with-transaction
+          transaction
+          true
+          (let [[_ result]
+                (tx/execute transaction [(tx/statement query params)])]
+            (first result))))))
