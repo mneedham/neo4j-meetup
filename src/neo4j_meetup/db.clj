@@ -4,6 +4,8 @@
   (:require [environ.core :as e])
   (:require [clj-time.core :as t])
   (:require [clj-time.coerce :as c])
+  (:require [clojure.walk :as walk])
+  (:require [clojurewerkz.neocons.rest.cypher :as cy])
   (:require [clojurewerkz.neocons.rest :as nr]
             [clojurewerkz.neocons.rest.transaction :as tx]))
 
@@ -30,3 +32,9 @@
           (let [[_ result]
                 (tx/execute transaction [(tx/statement query params)])]
             (first result))))))
+
+(defn cypher
+  ([query] (cypher query {}))
+  ([query params]
+     (let [conn (nr/connect NEO4J_HOST)]
+       (->> (cy/tquery query params) walk/keywordize-keys))))
