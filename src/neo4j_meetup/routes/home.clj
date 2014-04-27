@@ -12,7 +12,11 @@
   (layout/render
     "home.html" {:events (meetup/all-events core/MEETUP_NAME) }))
 
-(add-filter! :timestamp-to-date #(f/unparse (f/formatter "dd MMMM yyyy") (c/from-long %)))
+(add-filter! :timestamp-to-date
+             (fn [timestamp]
+               (if (= timestamp nil)
+                 "-"
+                 (f/unparse (f/formatter "dd MMMM yyyy") (c/from-long timestamp)))))
 (add-filter! :guestify #(if (= % 0) "-" %))
 
 (defn events-page [event-id]

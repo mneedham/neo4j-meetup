@@ -16,6 +16,7 @@
        <thead>
          <th>Name</th>
          <th>Time of RSVP</th>
+         <th>Initial RSVP</th>
          <th>Guests</th>
        </thead>
        <tbody>
@@ -23,6 +24,7 @@
            <tr>
              <td><a href="/members/{{response.person.data.id}}">{{response.person.data.name}}</a></td> 
              <td>{{response.rsvp.data.time|timestamp-to-date}}</td>
+             <td>{{response.initial.data.time|timestamp-to-date}}</td>
              <td>{{response.rsvp.data.guests|guestify}}</td>
            </tr>
      {% endfor %}

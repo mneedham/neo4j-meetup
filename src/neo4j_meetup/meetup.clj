@@ -34,23 +34,15 @@
      (map #(reduce merge (:row %)))
      (map #(merge % (extract-date-time (+ (:time %) (:utc_offset %))))) )))
 
-(comment (defn event [event-id]
-           (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
-               RETURN event, venue"
-                 params {:eventId event-id}]
-             (->>
-              (db/tx-api-single query params)
-              :data
-              (map #(reduce merge (:row %)))
-              (map #(merge % (extract-date-time (+ (:time %) (:utc_offset %))))) 
-              first))))
-
 (defn event [event-id]
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
-MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD|:INITIALLY_RSVPD]-(person)
-WITH event, venue, rsvp, person
-ORDER BY rsvp.time
-RETURN event, venue, COLLECT({rsvp: rsvp, person: person}) AS responses"
+               MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
+               WITH event, venue, rsvp, person
+               ORDER BY rsvp.time
+               OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
+               RETURN event,
+                      venue,
+                      COLLECT({rsvp: rsvp, initial: initial, person: person}) AS responses"
         params {:eventId event-id}]
     (->>
      (db/cypher query params)
