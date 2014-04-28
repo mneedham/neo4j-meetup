@@ -77,6 +77,12 @@
                   MATCH (v2:Venue {id: 10185422})
                   MERGE (v1)-[:ALIAS_OF]->(v2)"))
 
+(defn clear-all []
+  (db/tx-api-single) "
+    MATCH (n)
+    OPTIONAL MATCH (n)-[r]-(m)
+    DELETE n,r,m")
+
 (defn create-time-tree [start-year end-year]
   (db/tx-api-single "
     WITH range({start}, {end}) AS years, range(1,12) as months
