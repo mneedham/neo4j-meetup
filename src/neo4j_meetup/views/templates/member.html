@@ -18,6 +18,7 @@ Joined
      <table class="table">
        <thead>
          <th>Title</th>
+         <th>Date</th>
          <th>Last response</th>
          <th>Time of first response</th>
          <th>Time of last response</th>
@@ -26,7 +27,7 @@ Joined
        <tbody>
            {% for response in result.rsvps %}
            <tr>
-             <td><a href="/events/{{response.event.data.id}}">{{response.event.data.name}}</a></td> 
+             <td><a href="/events/{{response.event.data.id}}">{{response.event.data.name}}</a></td>             <td>{{response.event.data.time|timestamp-to-date}}</td>
              <td>{{response.rsvp.data.response}}</td>
              <td>{{response.initial.data.time|timestamp-to-date}}</td>
              <td>{{response.rsvp.data.time|timestamp-to-date}}</td>

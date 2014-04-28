@@ -48,3 +48,13 @@
     (->>
      (db/cypher query params)
      first)))
+
+(defn venue [venue-id]
+  (let [query "MATCH (venue:Venue {id: {venueId}})<-[:HELD_AT]-(meetup)
+               WITH venue, meetup
+               ORDER BY meetup.time
+               RETURN venue, COLLECT(meetup) AS meetups"
+        params {:venueId (read-string venue-id)}]
+    (->>
+     (db/cypher query params)
+     first)))
