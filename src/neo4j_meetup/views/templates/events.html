@@ -10,26 +10,48 @@
 
      <div>
 
-     <h4>RSVPs</h4>
-
+     <h4>Attendees ({{result.attendees|count}})</h4>
      <table class="table">
        <thead>
          <th>Name</th>
+         <th>Last response</th>
          <th>Time of RSVP</th>
-         <th>Initial RSVP</th>
          <th>Guests</th>
        </thead>
        <tbody>
-           {% for response in result.responses %}
+           {% for response in result.attendees %}
            <tr>
              <td><a href="/members/{{response.person.data.id}}">{{response.person.data.name}}</a></td> 
+             <td>{{response.rsvp.data.response}}</td>
              <td>{{response.rsvp.data.time|timestamp-to-date}}</td>
-             <td>{{response.initial.data.time|timestamp-to-date}}</td>
              <td>{{response.rsvp.data.guests|guestify}}</td>
            </tr>
      {% endfor %}
       </tbody>
      </table>
+
+     <h4>Dropouts ({{result.dropouts|count}})</h4>
+     <table class="table">
+       <thead>
+         <th>Name</th>
+         <th>Last response</th>
+         <th>Time of first response</th>
+         <th>Time of last response</th>
+         <th>Guests</th>
+       </thead>
+       <tbody>
+           {% for response in result.dropouts %}
+           <tr>
+             <td><a href="/members/{{response.person.data.id}}">{{response.person.data.name}}</a></td> 
+             <td>{{response.rsvp.data.response}}</td>
+             <td>{{response.initial.data.time|timestamp-to-date}}</td>
+             <td>{{response.rsvp.data.time|timestamp-to-date}}</td>
+             <td>{{response.rsvp.data.guests|guestify}}</td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+
 
     
 </div>

@@ -6,17 +6,14 @@
   (:require [neo4j-meetup.views.layout :as layout]
             [neo4j-meetup.util :as util]
             [neo4j-meetup.core :as core]
-            [neo4j-meetup.meetup :as meetup]))
+            [neo4j-meetup.meetup :as meetup]
+            [neo4j-meetup.timestamp :as timestamp]))
 
 (defn home-page []
   (layout/render
     "home.html" {:events (meetup/all-events core/MEETUP_NAME) }))
 
-(add-filter! :timestamp-to-date
-             (fn [timestamp]
-               (if (= timestamp nil)
-                 "-"
-                 (f/unparse (f/formatter "dd MMMM yyyy") (c/from-long timestamp)))))
+(add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
 (add-filter! :guestify #(if (= % 0) "-" %))
 
 (defn events-page [event-id]
