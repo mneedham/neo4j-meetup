@@ -10,8 +10,13 @@
             [neo4j-meetup.timestamp :as timestamp]))
 
 (defn home-page []
-  (layout/render
-    "home.html" {:events (meetup/all-events core/MEETUP_NAME) }))
+  (let [now
+        (c/to-long (clj-time.core/now))
+        [past upcoming]
+        (partition-by #(> (->> % :event :data :time) now)
+                      (meetup/all-events core/MEETUP_NAME))]
+    (layout/render
+     "home.html" {:past (reverse past) :upcoming upcoming})))
 
 (add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
 (add-filter! :guestify #(if (= % 0) "-" %))

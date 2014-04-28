@@ -12,15 +12,38 @@
           </tr>
       </thead>  
       <tbody>
-        {% for event in events %}
+        {% for row in upcoming %}
         <tr>
-          <td><a href="/events/{{event.id}}">{{event.name}}</a></td>
-          <td>{{event.formatted-date}}</td>
-          <td>{{event.formatted-time}}</td>          
+          <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+          <td>{{row.formatted-date}}</td>
+          <td>{{row.formatted-time}}</td>          
         </tr>
         {% endfor %}
 
       </tbody>
     </table>
+
+    <h3>Previous meetups</h3>
+    <table class="table">
+      <thead>
+          <tr>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+      </thead>  
+      <tbody>
+        {% for row in past %}
+        <tr>
+          <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+          <td>{{row.formatted-date}}</td>
+          <td>{{row.formatted-time}}</td>          
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+
+
   </div>
 {% endblock %}

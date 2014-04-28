@@ -10,10 +10,9 @@
   (let [query "MATCH (event:Event)
                RETURN event"]
     (->>
-     (db/tx-api-single query)
-     :data
-     (map #(reduce merge (:row %)))
-     (map #(merge % (extract-date-time (+ (:time %) (:utc_offset %))))) )))
+     (db/cypher query)
+     (map #(merge %  (extract-date-time
+                      (+ (-> % :event :data :time) (-> % :event :data :utc_offset))))))))
 
 (defn event [event-id]
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
