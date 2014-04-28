@@ -1,21 +1,6 @@
 (ns neo4j-meetup.meetup
-  (:require [clj-http.client :as client])
-  (:require [clojure.data.json :as json])
-  (:require [environ.core :as e])
-  (:require [clj-time.core :as t])
-  (:require [clj-time.coerce :as c])
-  (:require [clj-time.format :as f])
   (:require [neo4j-meetup.db :as db]
-            [neo4j-meetup.timestamp :as timestamp])
-  (:require [clojurewerkz.neocons.rest :as nr]
-            [clojurewerkz.neocons.rest.transaction :as tx]))
-
-(defn day-suffix [day]
-  (let [stripped-day (if (< day 20) day (mod day 10))]
-    (cond (= stripped-day 1) "st"
-          (= stripped-day 2) "nd"
-          (= stripped-day 3) "rd"
-          :else "th")))
+            [neo4j-meetup.timestamp :as timestamp]))
 
 (defn extract-date-time [timestamp]
   { :formatted-time (timestamp/as-time timestamp)
