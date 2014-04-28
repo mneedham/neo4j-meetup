@@ -21,10 +21,17 @@
    (layout/render
     "events.html" {:result result})))
 
+(defn members-page [member-id]
+  (let [result (meetup/member member-id) ]
+    (print result)
+   (layout/render
+    "member.html" {:result result})))
+
 (defn about-page []
   (layout/render "about.html"))
 
 (defroutes home-routes
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
+  (GET "/members/:id" [id] (members-page id))
   (GET "/about" [] (about-page)))

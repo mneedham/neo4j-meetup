@@ -1,0 +1,46 @@
+{% extends "neo4j_meetup/views/templates/base.html" %}
+{% block content %}
+  <div class="row-fluid">
+    <h3>{{result.member.data.name}}</h3>
+
+    <div>
+<label>Bio</label>
+        {{result.member.data.bio}}
+    </div>
+    <div>
+<label>
+Joined
+</label>
+       {{result.member.data.joined|timestamp-to-date}}
+    <div>
+
+     <h4>RSVPs</h4>
+     <table class="table">
+       <thead>
+         <th>Title</th>
+         <th>Last response</th>
+         <th>Time of first response</th>
+         <th>Time of last response</th>
+         <th>Guests</th>
+       </thead>
+       <tbody>
+           {% for response in result.rsvps %}
+           <tr>
+             <td><a href="/events/{{response.event.data.id}}">{{response.event.data.name}}</a></td> 
+             <td>{{response.rsvp.data.response}}</td>
+             <td>{{response.initial.data.time|timestamp-to-date}}</td>
+             <td>{{response.rsvp.data.time|timestamp-to-date}}</td>
+             <td>{{response.rsvp.data.guests|guestify}}</td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+
+
+    
+</div>
+
+
+    </div>
+  </div>
+{% endblock %}

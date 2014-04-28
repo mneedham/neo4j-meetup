@@ -36,3 +36,15 @@
      (map #(merge %  (extract-date-time
                       (+ (-> % :event :data :time) (-> % :event :data :utc_offset)))))
      first)))
+
+(defn member [member-id]
+  (let [query "MATCH (member:MeetupProfile {id: {memberId}})
+               OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)
+               OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
+               WITH member, rsvp, event, initial
+               ORDER BY event.time
+               RETURN member, COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps"
+        params {:memberId (read-string member-id)}]
+    (->>
+     (db/cypher query params)
+     first)))
