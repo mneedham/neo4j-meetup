@@ -36,5 +36,5 @@
 (defn cypher
   ([query] (cypher query {}))
   ([query params]
-     (let [conn (nr/connect NEO4J_HOST)]
+     (let [conn (nr/connect! NEO4J_HOST)]
        (->> (cy/tquery query params) walk/keywordize-keys))))

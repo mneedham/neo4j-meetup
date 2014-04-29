@@ -7,6 +7,7 @@
       <thead>
           <tr>
             <th>Title</th>
+            <th>Venue</th>
             <th>Date</th>
             <th>Time</th>
           </tr>
@@ -15,6 +16,7 @@
         {% for row in upcoming %}
         <tr>
           <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+          <td><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
           <td>{{row.formatted-date}}</td>
           <td>{{row.formatted-time}}</td>          
         </tr>
@@ -28,6 +30,7 @@
       <thead>
           <tr>
             <th>Title</th>
+            <th>Venue</th>
             <th>Date</th>
             <th>Time</th>
           </tr>
@@ -36,6 +39,7 @@
         {% for row in past %}
         <tr>
           <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+         <td><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
           <td>{{row.formatted-date}}</td>
           <td>{{row.formatted-time}}</td>          
         </tr>

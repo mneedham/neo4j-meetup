@@ -13,8 +13,7 @@
   (let [now
         (c/to-long (clj-time.core/now))
         [past upcoming]
-        (partition-by #(> (->> % :event :data :time) now)
-                      (meetup/all-events core/MEETUP_NAME))]
+        (partition-by #(> (->> % :event :data :time) now) (meetup/all-events core/MEETUP_NAME))]
     (layout/render
      "home.html" {:past (reverse past) :upcoming upcoming})))
 

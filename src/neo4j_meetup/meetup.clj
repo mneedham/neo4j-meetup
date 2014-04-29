@@ -7,8 +7,8 @@
     :formatted-date (timestamp/as-date timestamp) })
 
 (defn all-events [meetup-name]
-  (let [query "MATCH (event:Event)
-               RETURN event"]
+  (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
+               RETURN event, venue"]
     (->>
      (db/cypher query)
      (map #(merge %  (extract-date-time
