@@ -10,15 +10,19 @@
             <th>Venue</th>
             <th>Date</th>
             <th>Time</th>
+            <th>Attendees</th>
+            <th>Dropouts</th>
           </tr>
       </thead>  
       <tbody>
         {% for row in upcoming %}
         <tr>
-          <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
-          <td><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
-          <td>{{row.formatted-date}}</td>
-          <td>{{row.formatted-time}}</td>          
+          <td width="40%"><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+          <td width="20%"><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
+          <td width="14%">{{row.formatted-date}}</td>
+          <td width="10%">{{row.formatted-time}}</td>          
+          <td width="8%">{{row.attendees}}</td>          
+          <td width="8%">{{row.dropouts}}</td>          
         </tr>
         {% endfor %}
 
@@ -33,15 +37,19 @@
             <th>Venue</th>
             <th>Date</th>
             <th>Time</th>
+            <th>Attendees</th>
+            <th>Dropouts</th>
           </tr>
       </thead>  
       <tbody>
         {% for row in past %}
         <tr>
-          <td><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
-         <td><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
-          <td>{{row.formatted-date}}</td>
-          <td>{{row.formatted-time}}</td>          
+          <td width="40%"><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
+          <td width="20%"><a href="/venues/{{row.venue.data.id}}">{{row.venue.data.name}}</a></td>
+          <td width="14%">{{row.formatted-date}}</td>
+          <td width="10%">{{row.formatted-time}}</td>          
+          <td width="8%">{{row.attendees}}</td>          
+          <td width="8%">{{row.dropouts}}</td>          
         </tr>
         {% endfor %}
 

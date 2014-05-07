@@ -9,6 +9,12 @@
             [neo4j-meetup.meetup :as meetup]
             [neo4j-meetup.timestamp :as timestamp]))
 
+(defn time-descending [row]
+  (* -1 (->> row :event :data :time)))
+
+(defn time-ascending [row]
+  (->> row :event :data :time))
+
 (defn home-page []
   (let [now
         (c/to-long (clj-time.core/now))
@@ -17,7 +23,8 @@
         {upcoming true past false }
         (group-by #(> (->> % :event :data :time) now) all)]
     (layout/render
-     "home.html" {:past (reverse past) :upcoming upcoming})))
+     "home.html" {:past (sort-by time-descending past)
+                  :upcoming (sort-by time-ascending upcoming)})))
 
 (add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
 (add-filter! :guestify #(if (= % 0) "-" %))

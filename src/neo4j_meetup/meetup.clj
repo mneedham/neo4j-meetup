@@ -8,8 +8,16 @@
 
 (defn all-events [meetup-name]
   (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
-               OPTIONAL MATCH (event)<-[:TO]-(rsvp)
-               RETURN event, venue, COUNT(rsvp) AS rsvps"]
+               OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
+               OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
+               WITH event, venue, COLLECT({rsvp: rsvp, initial:initial, person:person}) AS responses
+               RETURN event, 
+                      venue, 
+                      LENGTH([response in responses
+                                WHERE response.initial is null
+                                AND response.rsvp.response = 'yes']) AS attendees,
+                      LENGTH([response in responses
+                                WHERE NOT response.initial is null]) AS dropouts"]
     (->>
      (db/cypher query)
      (map #(merge %  (extract-date-time
