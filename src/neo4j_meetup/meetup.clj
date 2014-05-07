@@ -8,7 +8,8 @@
 
 (defn all-events [meetup-name]
   (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
-               RETURN event, venue"]
+               OPTIONAL MATCH (event)<-[:TO]-(rsvp)
+               RETURN event, venue, COUNT(rsvp) AS rsvps"]
     (->>
      (db/cypher query)
      (map #(merge %  (extract-date-time
@@ -16,7 +17,7 @@
 
 (defn event [event-id]
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
-               MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
+               OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
                WITH event, venue, rsvp, person
                ORDER BY rsvp.time
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)

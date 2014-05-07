@@ -12,8 +12,10 @@
 (defn home-page []
   (let [now
         (c/to-long (clj-time.core/now))
-        [past upcoming]
-        (partition-by #(> (->> % :event :data :time) now) (meetup/all-events core/MEETUP_NAME))]
+        all
+        (meetup/all-events core/MEETUP_NAME)
+        {upcoming true past false }
+        (group-by #(> (->> % :event :data :time) now) all)]
     (layout/render
      "home.html" {:past (reverse past) :upcoming upcoming})))
 
