@@ -45,6 +45,19 @@
                       (+ (-> % :event :data :time) (-> % :event :data :utc_offset)))))
      first)))
 
+(defn all-members []
+  (let [ query "MATCH (profile:MeetupProfile)
+                OPTIONAL MATCH (profile)-[r:RSVPD]->(rsvp {response: 'yes'})-[:TO]->(e)
+                WHERE e.time < timestamp()
+                WITH profile, rsvp, e
+                ORDER BY profile.name, e.time DESC
+                RETURN profile,
+                       COUNT(rsvp) as rsvps,
+                       COLLECT({event: e, rsvp: rsvp})[0] AS recent
+                ORDER BY profile.name
+                "]
+    (->> (db/cypher query {}))))
+
 (defn member [member-id]
   (let [query "MATCH (member:MeetupProfile {id: {memberId}})
                OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)

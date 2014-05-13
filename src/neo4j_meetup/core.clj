@@ -69,8 +69,6 @@
 (defn save [file data]
   (clojure.core/spit file (json/write-str data)))
 
-(defn load [file]
-  (json/read-str (slurp file) :key-fn keyword))
 
 (defn -main [& args]
   (save "data/members-2014-05-09.json" (get-all members))

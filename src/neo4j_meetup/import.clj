@@ -1,5 +1,4 @@
 (ns neo4j-meetup.import
-  (:require [clj-http.client :as client])
   (:require [clojure.data.json :as json])
   (:require [environ.core :as e])
   (:require [clj-time.core :as t])

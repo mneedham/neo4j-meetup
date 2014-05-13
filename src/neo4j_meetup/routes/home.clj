@@ -34,10 +34,15 @@
    (layout/render
     "events.html" {:result result})))
 
-(defn members-page [member-id]
-  (let [result (meetup/member member-id) ]
-   (layout/render
-    "member.html" {:result result})))
+(defn members-page
+  ([]
+     (let [result (meetup/all-members)]
+       (layout/render
+        "members.html" {:result result})))
+  ([member-id]
+      (let [result (meetup/member member-id) ]
+        (layout/render
+         "member.html" {:result result}))))
 
 (defn venues-page [venue-id]
   (let [result (meetup/venue venue-id) ]
@@ -50,6 +55,7 @@
 (defroutes home-routes
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
+  (GET "/members" [] (members-page))
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))
   (GET "/about" [] (about-page)))
