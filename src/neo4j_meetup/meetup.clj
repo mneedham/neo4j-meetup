@@ -60,11 +60,13 @@
 
 (defn member [member-id]
   (let [query "MATCH (member:MeetupProfile {id: {memberId}})
+               OPTIONAL MATCH (member)-[:INTERESTED_IN_TOPIC]->(topic)
+               WITH member, COLLECT(topic) as topics
                OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
-               WITH member, rsvp, event, initial
+               WITH member, rsvp, event, initial, topics
                ORDER BY event.time
-               RETURN member, COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps"
+               RETURN member, COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics"
         params {:memberId (read-string member-id)}]
     (->>
      (db/cypher query params)

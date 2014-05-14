@@ -4,3 +4,21 @@ body {
     height: 100%;
     padding-top: 40px;
 }
+
+ul{
+overflow:hidden;
+padding-left: 0px;
+}
+li{
+display:inline-block;
+}
+
+
+
+
+
+ul li { float: left; }
+ul li:before { content: "►"; padding: 0 .1em 0 0.5em; }
+
+
+

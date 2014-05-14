@@ -15,6 +15,19 @@ Joined
        {{result.member.data.joined|timestamp-to-date}}
     <div>
 
+<label>
+Interested in
+</label>
+<div>
+
+
+   <ul>
+     {% for topic in result.topics %}
+       <li> <a href="/topics/{{topic.data.id}}">{{ topic.data.name }}</a></li>
+     {% endfor %}
+   </ul>
+</div>
+
      <h4>RSVPs</h4>
      <table class="table">
        <thead>

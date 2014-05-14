@@ -31,6 +31,17 @@
         {:as :json})
        :body :results))
 
+(defn members-of-other-group
+  [{perpage :perpage offset :offset orderby :orderby group-id :groupid}]
+  (->> (client/get
+        (str "https://api.meetup.com/2/members?page=" perpage
+             "&offset=" offset
+             "&orderby=" orderby
+             "&group_id=" group-id
+             "&key=" MEETUP_KEY)
+        {:as :json})
+       :body :results))
+
 (defn events
   [{perpage :perpage offset :offset orderby :orderby}]
   (->> (client/get
@@ -39,6 +50,19 @@
              "&orderby=" orderby
              "&status=upcoming,past&"
              "&group_urlname=" MEETUP_NAME
+             "&key=" MEETUP_KEY)
+        {:as :json})
+       :body :results))
+
+(defn groups
+  [{perpage :perpage offset :offset orderby :orderby}]
+  (->> (client/get
+        (str "https://api.meetup.com/2/groups?page=" perpage
+             "&offset=" offset
+             "&orderby=" orderby
+             "&topic=nosql"
+             "&lat=51.5072"
+             "&lon=0.1275"
              "&key=" MEETUP_KEY)
         {:as :json})
        :body :results))
@@ -55,10 +79,12 @@
            {:as :json})
           :body :results)))
 
-(defn get-all [api-fn]
-  (flatten
-   (take-while seq
-               (map #(api-fn {:perpage 200 :offset % :orderby "name"}) (offsets)))))
+(defn get-all
+  ([api-fn] (get-all api-fn {}))
+  ([api-fn args]
+                  (flatten
+                   (take-while seq
+                               (map #(api-fn (merge {:perpage 200 :offset % :orderby "name"} args)) (offsets))))))
 
 (defn all-events []
   (get-all events))
@@ -69,9 +95,17 @@
 (defn save [file data]
   (clojure.core/spit file (json/write-str data)))
 
+(defn load-json [file]
+  (json/read-str (slurp file) :key-fn keyword))
+
+(defn save-other-groups []
+  (doseq [id (map :id (load-json "data/groups-2014-05-14.json"))]
+    (save (str "data/members-2014-05-14/" id ".json")
+          (get-all members-of-other-group {:groupid id}))))
 
 (defn -main [& args]
-  (save "data/members-2014-05-09.json" (get-all members))
-  (save "data/events-2014-05-09.json" (get-all events))
-  (save "data/rsvps-2014-05-09.json"
-        (mapcat #(get-all (partial rsvps %)) (map :id (load "data/events-2014-05-09.json")))))
+  (save "data/groups-2004-05-14.json" (get-all groups))
+  (save "data/members-2014-05-13.json" (get-all members))
+  (save "data/events-2014-05-13.json" (get-all events))
+  (save "data/rsvps-2014-05-13.json"
+        (mapcat #(get-all (partial rsvps %)) (map :id (load-json "data/events-2014-05-13.json")))))

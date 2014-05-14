@@ -55,6 +55,48 @@
                 :topics (:topics member)}]
     (tx/statement query params)))
 
+(defn create-event-types [start-year end-year]
+  (db/tx-api-single "
+    MERGE (intro:EventType {name: 'Intro to Graphs'})
+    MERGE (cypher:EventType {name: 'Hands on Cypher'})
+    MERGE (modelling:EventType {name: 'Intro to Modelling'})
+    MERGE (app:EventType {name: 'Hands on Build an App'})
+    MERGE (normal:EventType {name: 'Normal Last Wednesday' })
+    MERGE (graphPub:EventType {name: 'Graph Pub' }) 
+
+    MERGE (intro)-[:NEXT]->(cypher)
+    MERGE (intro)-[:NEXT]->(modelling)
+    MERGE (intro)-[:NEXT]->(normal)
+    MERGE (intro)-[:NEXT]->(graphPub)
+    MERGE (cypher)-[:NEXT]->(app)" {}))
+
+(defn create-event-types  []
+  (db/tx-api-single "
+    MATCH (e:Event {name: 'Intro to Graphs'}) 
+    MATCH (type:EventType {name: 'Intro to Graphs'}) 
+    MERGE (e)-[:MEETUP_TYPE]->(type)
+
+    UNION
+
+    MATCH (e:Event) WHERE e.name =~ '.*(Pub|Café).*'
+    MATCH (graphPub:EventType {name: 'Graph Pub' }) 
+    MERGE (e)-[:MEETUP_TYPE]->(graphPub)
+
+    UNION
+
+    MATCH (e:Event) WHERE e.name =~ '(?i).*Hands On.*' AND e.name =~ '(?i).*cypher.*'
+    MATCH (cypher:EventType {name: 'Hands on Cypher'})
+    MERGE (e)-[:MEETUP_TYPE]->(cypher) 
+
+    UNION
+
+    MATCH (e:Event) WHERE e.name =~ '(?i).*Hands On.*' AND e.name =~ '(?i).*app.*'
+    MATCH (app:EventType {name: 'Hands on Build an App'})
+    MERGE (e)-[:MEETUP_TYPE]->(app)     
+
+" {}))
+
+
 (defn create-time-tree [start-year end-year]
   (db/tx-api-single "
     WITH range({start}, {end}) AS years, range(1,12) as months
@@ -190,7 +232,7 @@
 (defn -main [& args]
   (clear-all)
   (create-time-tree 2011 2014)
-  (db/tx-api create-member  (load-json "data/members-2014-05-09.json"))
-  (db/tx-api create-event  (load-json "data/events-2014-05-09.json"))
-  (db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-09.json")))
+  (db/tx-api create-member  (load-json "data/members-2014-05-13.json"))
+  (db/tx-api create-event  (load-json "data/events-2014-05-13.json"))
+  (db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json")))
   (link-credo-venues))
