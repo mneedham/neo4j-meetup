@@ -166,3 +166,9 @@ d2.day + "/" + m2.month + "/" + y2.year AS changedToNo
 WHERE NOT days is null
 RETURN meetup.name, event.name, eventDate, initialYes, changedToNo, days
 ORDER BY days DESC
+
+// topics in common 
+
+MATCH (n:Group {name: "Neo4j - London User Group"} ), (m:Group)
+MATCH path = (n)-[:HAS_TOPIC]->(topic)<-[:HAS_TOPIC]-(m)
+RETURN n.name, m.name, COLLECT(topic.name)

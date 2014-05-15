@@ -130,8 +130,7 @@
           CREATE UNIQUE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
 
 (defn create-event [event]
-  (tx/statement "MERGE (g:Group {id: {group}.id})
-                 SET g = {group}
+  (tx/statement "MATCH (g:Group {id: {group}.id})
                  MERGE (e:Event {id: {event}.id})
                  SET e = {event}
                  MERGE (g)-[:HOSTED_EVENT]->(e)
@@ -152,6 +151,21 @@
                          :description (:description event)
                          :time (:time event)
                          :utc_offset (:utc_offset event)}}))
+
+(defn create-group [group]
+  (tx/statement "MERGE (g:Group {id: {group}.id})
+                 SET g = {group}
+                 FOREACH(topic IN {topics} |
+                   MERGE (t:Topic {id: topic.id})
+                   SET t = topic
+                   MERGE (g)-[:HAS_TOPIC]->(t)) "
+                {:group {:id (:id group)
+                         :city (:city group)
+                         :name (:name group)
+                         :description (:description group)
+                         :created (:created group)
+                         }
+                 :topics (:topics group)}))
 
 (defn create-rsvp [rsvp]
   (tx/statement "MATCH (e:Event {id: {event}.id})
@@ -221,17 +235,23 @@
       :timetree (as-timetree (:created rsvp))      
       :guests (:guests rsvp)}]))
 
-
-
 (defn rsvps-with-responses [rsvps]
   (map #(assoc % :responses (responses %)) rsvps))
 
 (defn load-json [file]
   (json/read-str (slurp file) :key-fn keyword))
 
+(defn member-files []
+  (filter #(.isFile %)
+          (file-seq (clojure.java.io/file "data/members-2014-05-14"))) )
+
+(doseq [file (member-files)]
+  (load-json (.getPath file)))
+
 (defn -main [& args]
   (clear-all)
   (create-time-tree 2011 2014)
+  (db/tx-api create-group (load-json "data/groups-2014-05-14.json"))
   (db/tx-api create-member  (load-json "data/members-2014-05-13.json"))
   (db/tx-api create-event  (load-json "data/events-2014-05-13.json"))
   (db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json")))
