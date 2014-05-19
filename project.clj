@@ -18,6 +18,7 @@
                  [cheshire "5.1.2"]
                  [hiccup "1.0.2"]
                  [clojure-opennlp "0.3.2"]
+                 [org.clojure/data.csv "0.1.2"]
                  [environ "0.4.0"]]
   :plugins [[lein-ring "0.8.10"]
             [lein-environ "0.4.0"]]
@@ -26,6 +27,8 @@
          :destroy neo4j-meetup.handler/destroy}
 
   :repl-options {:init-ns neo4j-meetup.repl}
+
+  :jvm-opts ["-Xmx8g" "-server"] 
 
   :profiles
   {:uberjar {:aot :all}

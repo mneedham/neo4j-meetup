@@ -11,7 +11,15 @@
   (db/tx-api-single "
     MATCH (n)
     OPTIONAL MATCH (n)-[r]-(m)
-    DELETE n,r,m"))
+    DELETE n,r,m")
+  (db/tx-api-single "CREATE INDEX ON :Person(meetupId)")
+  (db/tx-api-single "CREATE INDEX ON :MeetupProfile(id)")
+  (db/tx-api-single "CREATE INDEX ON :Group(id)")
+  (db/tx-api-single "CREATE INDEX ON :Year(year)")
+  (db/tx-api-single "CREATE INDEX ON :Month(month)")
+  (db/tx-api-single "CREATE CONSTRAINT ON (t:Topic) ASSERT t.id IS UNIQUE")
+  (db/tx-api-single "CREATE INDEX ON :Twitter(id)")
+  (db/tx-api-single "CREATE INDEX ON :LinkedIn(id)"))
 
 (defn as-timetree [timestamp]
   (let [event-date (c/from-long timestamp)]
@@ -22,37 +30,41 @@
 (defn create-member [member]
   (let [social-media (:other_services member)
         query (str "MERGE (p:Person {meetupId: {person}.id})
-                    SET p.name = {person}.name
+                    ON CREATE SET p.name = {person}.name
                     MERGE (m:MeetupProfile {id: {person}.id})
-                    SET m = {person}
+                    ON CREATE SET m = {person}
                     MERGE (p)-[:HAS_MEETUP_PROFILE]->(m)
                     WITH p, m
-                    MATCH (year:Year {year: {timetree}.year })
-                    MATCH (year)-[:HAS_MONTH]->(month {month: {timetree}.month })
-                    MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
-                    CREATE (m)-[:JOINED_ON]->(day) 
-                    FOREACH(topic IN {topics} |
-                      MERGE (t:Topic {id: topic.id})
-                      SET t = topic
-                      MERGE (m)-[:INTERESTED_IN_TOPIC]->(t)) "
+                    MATCH (g:Group {id: {groupid}})
+                    MERGE (m)-[:MEMBER_OF]->(g)
+                    WITH p,m
+                    MATCH (year:Year {year: {timetree}.year }),
+                          (year)-[:HAS_MONTH]->(month {month: {timetree}.month }),
+                          (month)-[:HAS_DAY]->(day {day: {timetree}.day })
+                    CREATE (m)-[:JOINED_ON]->(day)
+                    WITH m, p
+                    UNWIND {topics} AS topic
+                    MATCH (t:Topic {id: topic})
+                    MERGE (m)-[:INTERESTED_IN]->(t) "
                     (if (:twitter social-media)
                       "MERGE (twitter:Twitter {id: {socialmedia}.twitter.identifier })
                        MERGE (p)-[:HAS_TWITTER_ACCOUNT]->(twitter) "
                       "")
                     (if (:linkedin social-media)
-                      "MERGE (linked:LinkedIn {id: {socialmedia}.linkedin.identifier })
-                       MERGE (p)-[:HAS_LINKEDIN_ACCOUNT]->(linked) "
-                      "")
-                    "RETURN ID(p)")
+                       "MERGE (linked:LinkedIn {id: {socialmedia}.linkedin.identifier })
+                        MERGE (p)-[:HAS_LINKEDIN_ACCOUNT]->(linked) "
+                       ""))
         params {:person {
                          :id (:id member)
                          :name (:name member)
                          :bio (:bio member)
                          :joined (:joined member)
                          }
+                :groupid (:groupid member)
                 :timetree (as-timetree (:joined member))
                 :socialmedia social-media
-                :topics (:topics member)}]
+                :topics (map :id (:topics member))
+                }]
     (tx/statement query params)))
 
 (defn create-event-types [start-year end-year]
@@ -93,9 +105,7 @@
     MATCH (e:Event) WHERE e.name =~ '(?i).*Hands On.*' AND e.name =~ '(?i).*app.*'
     MATCH (app:EventType {name: 'Hands on Build an App'})
     MERGE (e)-[:MEETUP_TYPE]->(app)     
-
 " {}))
-
 
 (defn create-time-tree [start-year end-year]
   (db/tx-api-single "
@@ -132,7 +142,7 @@
 (defn create-event [event]
   (tx/statement "MATCH (g:Group {id: {group}.id})
                  MERGE (e:Event {id: {event}.id})
-                 SET e = {event}
+                 ON CREATE SET e = {event}
                  MERGE (g)-[:HOSTED_EVENT]->(e)
                  WITH e, g
                  MATCH (year:Year {year: {timetree}.year })
@@ -140,9 +150,8 @@
                  MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
                  CREATE (e)-[:HAPPENED_ON]->(day) 
                  MERGE (v:Venue {id: {venue}.id})
-                 SET v = {venue}
-                 MERGE (e)-[:HELD_AT]->(v)
-                 RETURN ID(g)"
+                 ON CREATE SET v = {venue}
+                 MERGE (e)-[:HELD_AT]->(v)"
                 {:group (:group event)
                  :venue (:venue event)
                  :timetree (as-timetree (:time event))              
@@ -155,10 +164,10 @@
 (defn create-group [group]
   (tx/statement "MERGE (g:Group {id: {group}.id})
                  SET g = {group}
-                 FOREACH(topic IN {topics} |
-                   MERGE (t:Topic {id: topic.id})
-                   SET t = topic
-                   MERGE (g)-[:HAS_TOPIC]->(t)) "
+                 WITH g
+                 UNWIND {topics} AS topic
+                 MATCH (t:Topic {id: topic.id})
+                 MERGE (g)-[:HAS_TOPIC]->(t)"
                 {:group {:id (:id group)
                          :city (:city group)
                          :name (:name group)
@@ -166,6 +175,9 @@
                          :created (:created group)
                          }
                  :topics (:topics group)}))
+
+(defn create-topic [topic]
+  (tx/statement "CREATE (t:Topic {topic})" {:topic topic}))
 
 (defn create-rsvp [rsvp]
   (tx/statement "MATCH (e:Event {id: {event}.id})
@@ -241,18 +253,52 @@
 (defn load-json [file]
   (json/read-str (slurp file) :key-fn keyword))
 
-(defn member-files []
+(defn member-files [dir]
   (filter #(.isFile %)
-          (file-seq (clojure.java.io/file "data/members-2014-05-14"))) )
+          (file-seq (clojure.java.io/file dir))) )
 
-(doseq [file (member-files)]
-  (load-json (.getPath file)))
+(defn extract-group-id [file-name]
+  (read-string (clojure.string/replace (.getName file-name) #".json" "")))
+
+
+(defn timed [fn description]
+  (println (str description ":" (with-out-str (time (fn))))))
+
+(comment (defn -main [& args]
+  (timed clear-all "clear")
+  (timed #(create-time-tree 2011 2014) "time-tree")
+  (timed #(db/tx-api create-group (load-json "data/groups-2014-05-14.json")) "groups")  
+  (let [file (clojure.java.io/file "data/members-2014-05-14/12962072.json")]
+    (timed #(db/tx-api create-member
+                       (map (fn [data] ( merge {:groupid (extract-group-id file)} data))
+                            (load-json (.getPath file))))
+           (str "members of " (extract-group-id file))))))
+
+(defn save-json [file data]
+  (clojure.core/spit file (json/write-str data)))
+
+(defn import-topics [member-files]
+  (db/tx-api create-topic (->> member-files
+                               (map #(load-json (.getPath %)))
+                               (mapcat (fn [data] (map #(:topics %) data)))
+                               flatten
+                               (clojure.core/set))))
+
+(comment (defn -main [& args]
+           (timed #(import-topics (member-files "data/members-2014-05-14")) "topics")))
 
 (defn -main [& args]
-  (clear-all)
-  (create-time-tree 2011 2014)
-  (db/tx-api create-group (load-json "data/groups-2014-05-14.json"))
-  (db/tx-api create-member  (load-json "data/members-2014-05-13.json"))
-  (db/tx-api create-event  (load-json "data/events-2014-05-13.json"))
-  (db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json")))
-  (link-credo-venues))
+  (let [member-files
+        (member-files "data/members-2014-05-14")]
+    (timed clear-all "clear")
+    (timed #(create-time-tree 2011 2014) "time-tree")
+    (timed #(import-topics member-files) "topics")
+    (timed #(db/tx-api create-group (load-json "data/groups-2014-05-14.json")) "groups")
+    (doseq [file member-files]
+      (timed #(db/tx-api create-member
+                         (map (fn [data] ( merge {:groupid (extract-group-id file)} data))
+                              (load-json (.getPath file))))
+             (str "members of " (extract-group-id file))))
+    (timed #(db/tx-api create-event  (load-json "data/events-2014-05-13.json")) "events")
+    (timed #(db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json"))) "rsvps")
+    (timed #(link-credo-venues) "credo venues")))

@@ -172,3 +172,17 @@ ORDER BY days DESC
 MATCH (n:Group {name: "Neo4j - London User Group"} ), (m:Group)
 MATCH path = (n)-[:HAS_TOPIC]->(topic)<-[:HAS_TOPIC]-(m)
 RETURN n.name, m.name, COLLECT(topic.name)
+ 
+// popular topics of other meetups
+MATCH (neo:Group {name: "Neo4j - London User Group"} ), (other:Group)
+MATCH (other)-[:HAS_TOPIC]->(topic)
+WHERE NOT ((neo)-[:HAS_TOPIC]->(topic))
+RETURN topic.name, COUNT(*) AS appearances
+ORDER BY appearances DESC
+
+// show which groups have which
+MATCH (neo:Group {name: "Neo4j - London User Group"} ), (other:Group)
+MATCH (other)-[:HAS_TOPIC]->(topic)
+WHERE NOT ((neo)-[:HAS_TOPIC]->(topic))
+RETURN topic.name, COLLECT(other.name),  COUNT(*) AS appearances
+ORDER BY appearances DESC
