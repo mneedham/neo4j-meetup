@@ -27,6 +27,18 @@
       :month (t/month event-date)
       :day (t/day event-date) }))
 
+(defn create-member-topics [member]
+  (let [query (str "MATCH (m:MeetupProfile {id: {person}.id})
+                    FOREACH(topic IN {topics} |
+                      MERGE (t:Topic {id: topic})
+                      MERGE (m)-[:INTERESTED_IN]->(t))")
+        params {:person {
+                         :id (:id member)
+                         }
+                :topics (map :id (:topics member))
+                }]
+    (tx/statement query params)))
+
 (defn create-member [member]
   (let [social-media (:other_services member)
         query (str "MERGE (p:Person {meetupId: {person}.id})
@@ -41,11 +53,7 @@
                     MATCH (year:Year {year: {timetree}.year }),
                           (year)-[:HAS_MONTH]->(month {month: {timetree}.month }),
                           (month)-[:HAS_DAY]->(day {day: {timetree}.day })
-                    CREATE (m)-[:JOINED_ON]->(day)
-                    WITH m, p
-                    UNWIND {topics} AS topic
-                    MATCH (t:Topic {id: topic})
-                    MERGE (m)-[:INTERESTED_IN]->(t) "
+                    CREATE (m)-[:JOINED_ON]->(day) "
                     (if (:twitter social-media)
                       "MERGE (twitter:Twitter {id: {socialmedia}.twitter.identifier })
                        MERGE (p)-[:HAS_TWITTER_ACCOUNT]->(twitter) "
@@ -63,7 +71,6 @@
                 :groupid (:groupid member)
                 :timetree (as-timetree (:joined member))
                 :socialmedia social-media
-                :topics (map :id (:topics member))
                 }]
     (tx/statement query params)))
 
@@ -108,7 +115,7 @@
 " {}))
 
 (defn create-time-tree [start-year end-year]
-  (db/tx-api-single "
+ (db/tx-api-single "
     WITH range({start}, {end}) AS years, range(1,12) as months
     FOREACH(year IN years | 
       MERGE (y:Year {year: year})
@@ -284,8 +291,13 @@
                                flatten
                                (clojure.core/set))))
 
-(comment (defn -main [& args]
-           (timed #(import-topics (member-files "data/members-2014-05-14")) "topics")))
+(comment (defn import-topics [member-files]
+           (->>  member-files
+                 (take 1)
+                 (map #(load-json (.getPath %)))
+                 (mapcat (fn [data] (map #(count ( :topics %)) data)))
+                 (reduce +)
+                 )))
 
 (defn -main [& args]
   (let [member-files
@@ -294,11 +306,11 @@
     (timed #(create-time-tree 2011 2014) "time-tree")
     (timed #(import-topics member-files) "topics")
     (timed #(db/tx-api create-group (load-json "data/groups-2014-05-14.json")) "groups")
-    (doseq [file member-files]
-      (timed #(db/tx-api create-member
-                         (map (fn [data] ( merge {:groupid (extract-group-id file)} data))
-                              (load-json (.getPath file))))
-             (str "members of " (extract-group-id file))))
+    (doseq [file  member-files]
+      (let [coll (map (fn [data] (merge {:groupid (extract-group-id file)} data))
+                              (load-json (.getPath file)))]
+        (timed #(db/tx-api create-member coll) (str "members of " (extract-group-id file)))
+        (timed #(db/tx-api create-member-topics coll) (str "members topics of " (extract-group-id file)))))
     (timed #(db/tx-api create-event  (load-json "data/events-2014-05-13.json")) "events")
     (timed #(db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json"))) "rsvps")
     (timed #(link-credo-venues) "credo venues")))
