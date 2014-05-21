@@ -29,17 +29,24 @@
 (defn event [event-id]
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
-               WITH event, venue, rsvp, person
+               OPTIONAL MATCH (person)-[:INTERESTED_IN]->(topic)
+               WHERE ()-[:HAS_TOPIC]->(topic)
+               WITH event, venue, rsvp, person, COLLECT(topic) as topics
                ORDER BY rsvp.time
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
                WITH event,
+                    venue, 
+                    COLLECT({rsvp: rsvp, initial: initial, person: person, topics: topics}) AS responses
+               WITH event,
                     venue,
-                    COLLECT({rsvp: rsvp, initial: initial, person: person}) AS responses
-               RETURN event,
-                      venue,
-                      [response in responses WHERE response.initial is null
-                                             AND response.rsvp.response = 'yes'] as attendees,
-                      [response in responses WHERE not response.initial is null] as dropouts
+                    [response in responses WHERE response.initial is null
+                                           AND response.rsvp.response = 'yes'] as attendees,
+                    [response in responses WHERE not response.initial is null] as dropouts,
+                    responses
+               UNWIND([response in attendees | response.topics]) AS topics
+               UNWIND(topics) AS topic
+               WITH event, venue, attendees, dropouts, {id: topic.id, name:topic.name, freq:COUNT(*)} AS t
+               RETURN event, venue, attendees, dropouts, COLLECT(t) AS topics
 "
         params {:eventId event-id}]
     (->>

@@ -29,6 +29,16 @@
 (add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
 (add-filter! :guestify #(if (= % 0) "-" %))
 
+(defn choose-tag-size [freq]
+  (println (str "*****" freq))
+  (cond (> freq 40) 10
+        (> freq 30) 9
+        (> freq 20) 8
+        (> freq 10) 7
+        (> freq 5) 5
+        :else 4))
+(add-filter! :tag-size choose-tag-size)
+
 (defn events-page [event-id]
   (let [result (meetup/event event-id) ]
    (layout/render

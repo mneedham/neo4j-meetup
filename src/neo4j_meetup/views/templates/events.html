@@ -7,10 +7,18 @@
       <span> 
         {{result.formatted-date}}, {{result.formatted-time}} at <a href="/venues/{{result.venue.data.id}}">{{result.venue.data.name}}</a>
       </span>
-
      <div>
 
-     <h4>Attendees ({{result.attendees|count}})</h4>
+<ul class="nav nav-tabs">
+  <li class="active tab"><a href="#attendees" data-toggle="tab">Attendees</a></li>
+  <li class="tab"><a href="#interests" data-toggle="tab">Interests</a></li>
+  <li class="tab"><a href="#dropouts" data-toggle="tab">Dropouts</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="attendees">
+
+     <h4>{{result.attendees|count}} attendees</h4>
      <table class="table">
        <thead>
          <th>Name</th>
@@ -30,7 +38,23 @@
       </tbody>
      </table>
 
-     <h4>Dropouts ({{result.dropouts|count}})</h4>
+</div>
+ <div class="tab-pane" id="interests">
+
+<div>
+   <ul class="cloud">
+     {% for topic in result.topics %}
+       <li class="tag"> 
+         <a class="tag{{topic.freq|tag-size}}" href="/topics/{{topic.id}}">{{ topic.name }}</a>
+         <sup>{{topic.freq}}</sup>
+       </li>
+     {% endfor %}
+   </ul>
+</div>
+</div>
+
+ <div class="tab-pane" id="dropouts">
+     <h4>{{result.dropouts|count}} dropouts</h4>
      <table class="table">
        <thead>
          <th>Name</th>
@@ -52,7 +76,8 @@
       </tbody>
      </table>
 
-
+</div>
+</div>
     
 </div>
 
