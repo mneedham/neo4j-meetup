@@ -11,13 +11,16 @@
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
                WITH event, venue, COLLECT({rsvp: rsvp, initial:initial, person:person}) AS responses
-               RETURN event, 
-                      venue, 
-                      LENGTH([response in responses
-                                WHERE response.initial is null
-                                AND response.rsvp.response = 'yes']) AS attendees,
-                      LENGTH([response in responses
-                                WHERE NOT response.initial is null]) AS dropouts"]
+               WITH event,
+                    venue,
+                    [response in responses WHERE response.initial is null AND response.rsvp.response = 'yes'] AS a,
+                    [response in responses WHERE NOT response.initial is null] AS d
+               RETURN event,
+                      venue,
+                      LENGTH(a) + REDUCE(acc=0, count IN [value IN a | value.rsvp.guests] | acc + count) as attendees,
+                      LENGTH(d) + REDUCE(acc=0, count IN [value IN d | value.rsvp.guests] | acc + count) as dropouts
+
+                      "]
     (->>
      (db/cypher query)
      (map #(merge %  (extract-date-time
@@ -46,7 +49,7 @@
      first)))
 
 (defn all-members []
-  (let [ query "MATCH (profile:MeetupProfile)
+  (let [ query "MATCH (profile:MeetupProfile)-[:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
                 OPTIONAL MATCH (profile)-[r:RSVPD]->(rsvp {response: 'yes'})-[:TO]->(e)
                 WHERE e.time < timestamp()
                 WITH profile, rsvp, e
@@ -60,13 +63,16 @@
 
 (defn member [member-id]
   (let [query "MATCH (member:MeetupProfile {id: {memberId}})
-               OPTIONAL MATCH (member)-[:INTERESTED_IN_TOPIC]->(topic)
-               WITH member, COLLECT(topic) as topics
+               OPTIONAL MATCH (member)-[:MEMBER_OF]->(group)
+               WITH member, COLLECT(group) AS groups
+               OPTIONAL MATCH (member)-[:INTERESTED_IN]->(topic)
+               WITH member, COLLECT(topic) as topics, groups
                OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
-               WITH member, rsvp, event, initial, topics
+               WITH member, rsvp, event, initial, topics, groups           
                ORDER BY event.time
-               RETURN member, COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics"
+               
+               RETURN member, COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics, groups"
         params {:memberId (read-string member-id)}]
     (->>
      (db/cypher query params)

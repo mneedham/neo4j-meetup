@@ -28,6 +28,20 @@ Interested in
    </ul>
 </div>
 
+<label>
+Member of
+</label>
+<div>
+
+
+   <ul>
+     {% for group in result.groups %}
+       <li> <a href="/groups/{{group.data.id}}">{{ group.data.name }}</a></li>
+     {% endfor %}
+   </ul>
+</div>
+
+
      <h4>RSVPs</h4>
      <table class="table">
        <thead>
