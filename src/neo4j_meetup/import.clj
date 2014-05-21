@@ -271,16 +271,6 @@
 (defn timed [fn description]
   (println (str description ":" (with-out-str (time (fn))))))
 
-(comment (defn -main [& args]
-  (timed clear-all "clear")
-  (timed #(create-time-tree 2011 2014) "time-tree")
-  (timed #(db/tx-api create-group (load-json "data/groups-2014-05-14.json")) "groups")  
-  (let [file (clojure.java.io/file "data/members-2014-05-14/12962072.json")]
-    (timed #(db/tx-api create-member
-                       (map (fn [data] ( merge {:groupid (extract-group-id file)} data))
-                            (load-json (.getPath file))))
-           (str "members of " (extract-group-id file))))))
-
 (defn save-json [file data]
   (clojure.core/spit file (json/write-str data)))
 
@@ -290,14 +280,6 @@
                                (mapcat (fn [data] (map #(:topics %) data)))
                                flatten
                                (clojure.core/set))))
-
-(comment (defn import-topics [member-files]
-           (->>  member-files
-                 (take 1)
-                 (map #(load-json (.getPath %)))
-                 (mapcat (fn [data] (map #(count ( :topics %)) data)))
-                 (reduce +)
-                 )))
 
 (defn -main [& args]
   (let [member-files
