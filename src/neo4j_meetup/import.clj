@@ -282,17 +282,25 @@
                                (clojure.core/set))))
 
 (defn -main [& args]
-  (let [member-files
-        (member-files "data/members-2014-05-14")]
+  (let [date (nth args 0)
+        member-files
+        (member-files (str "data/members-" date))]
     (timed clear-all "clear")
     (timed #(create-time-tree 2011 2014) "time-tree")
     (timed #(import-topics member-files) "topics")
-    (timed #(db/tx-api create-group (load-json "data/groups-2014-05-14.json")) "groups")
+    (timed #(db/tx-api create-group (load-json (str "data/groups-" date ".json")))
+           "groups")
     (doseq [file  member-files]
       (let [coll (map (fn [data] (merge {:groupid (extract-group-id file)} data))
-                              (load-json (.getPath file)))]
-        (timed #(db/tx-api create-member coll) (str "members of " (extract-group-id file)))
-        (timed #(db/tx-api create-member-topics coll) (str "members topics of " (extract-group-id file)))))
-    (timed #(db/tx-api create-event  (load-json "data/events-2014-05-13.json")) "events")
-    (timed #(db/tx-api create-rsvp (rsvps-with-responses (load-json "data/rsvps-2014-05-13.json"))) "rsvps")
+                      (load-json (.getPath file)))]
+        (timed #(db/tx-api create-member coll)
+               (str "members of " (extract-group-id file)))
+        (timed #(db/tx-api create-member-topics coll)
+               (str "members topics of " (extract-group-id file)))))
+    (timed #(db/tx-api create-event  (load-json (str "data/events-" date ".json")))
+           "events")
+    (timed #(db/tx-api create-rsvp
+                       (rsvps-with-responses
+                        (load-json (str "data/rsvps-" date ".json"))))
+           "rsvps")
     (timed #(link-credo-venues) "credo venues")))
