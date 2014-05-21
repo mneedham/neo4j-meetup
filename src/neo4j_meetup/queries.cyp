@@ -186,3 +186,86 @@ MATCH (other)-[:HAS_TOPIC]->(topic)
 WHERE NOT ((neo)-[:HAS_TOPIC]->(topic))
 RETURN topic.name, COLLECT(other.name),  COUNT(*) AS appearances
 ORDER BY appearances DESC
+
+// nosql london groups
+MATCH (m:MeetupProfile)
+WITH COUNT(m) AS allMembers
+MATCH (m:MeetupProfile)-[:MEMBER_OF]->(group)
+WITH group, count(m) as members, allMembers
+RETURN group.name, members, round(members * 10000.0 / allMembers) / 100 as percentage
+ORDER BY members DESC
+LIMIT 10
+
+// neo only
+MATCH (m:MeetupProfile)-[:MEMBER_OF]->(group {name: "Neo4j - London User Group"})
+OPTIONAL MATCH (m)-[:MEMBER_OF]->(other)
+WITH m, COUNT(m) as members
+WITH COLLECT({member:m, groups: members}) AS memberGroups
+RETURN LENGTH([x in memberGroups WHERE x.groups = 1]) AS neoOnly,
+       LENGTH([x in memberGroups  WHERE x.groups > 1]) AS others
+
+// overlap between the groups
+MATCH (group1:Group), (group2:Group)
+MATCH (group1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(group2)
+WHERE id(group1) > id(group2)
+RETURN group1.name, group2.name, COUNT(*) as commonMembers
+ORDER BY commonMembers DESC
+LIMIT 10       
+
+// adjacency matrix of overlap
+MATCH (g1:Group), (g2:Group)
+OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
+
+WITH g1, g2, CASE WHEN path is null THEN 0 ELSE COUNT(path) END AS overlap
+ORDER BY g1.name, g2.name
+
+RETURN g1.name, COLLECT(overlap)
+ORDER BY g1.name
+
+// adjacency matrix of top 5
+MATCH (g:Group)<-[:MEMBER_OF]-()
+WITH g, COUNT(*) as members
+ORDER BY members DESC
+LIMIT 5
+
+WITH COLLECT(g) AS groups
+UNWIND groups AS g1
+UNWIND groups AS g2
+
+OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
+
+WITH g1, g2, CASE WHEN path is null THEN 0 ELSE COUNT(path) END AS overlap
+ORDER BY g1.name, g2.name
+
+RETURN g1.name, COLLECT(overlap)
+ORDER BY g1.name
+
+// overlap with the neo4j group 
+MATCH (group1:Group {name: "Neo4j - London User Group"}), (group2:Group)
+MATCH (group1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(group2)
+RETURN group1.name, group2.name, COUNT(*) as commonMembers
+ORDER BY commonMembers DESC
+
+
+// overlap + % of total joins
+MATCH (group1:Group {name: "Neo4j - London User Group"}), (group2:Group)
+MATCH (group1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(group2)
+
+WITH group1, group2, COUNT(*) as commonMembers
+MATCH (group1)<-[:MEMBER_OF]-(group1Member)
+
+WITH group1, group2, commonMembers, COLLECT(id(group1Member)) AS group1Members
+MATCH (group2)<-[:MEMBER_OF]-(group2Member)
+
+WITH group1, group2, commonMembers, group1Members, COLLECT(id(group2Member)) AS group2Members
+WITH group1, group2, commonMembers, group1Members, group2Members
+
+UNWIND(group1Members + group2Members) AS combinedMember
+WITH DISTINCT group1, group2, commonMembers, combinedMember
+
+WITH group1, group2, commonMembers, COUNT(combinedMember) AS combinedMembers
+
+RETURN group1.name, group2.name, commonMembers, combinedMembers, round(10000.0 * commonMembers / combinedMembers) / 100 as percentage
+
+ORDER BY percentage DESC
+
