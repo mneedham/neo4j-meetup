@@ -4,6 +4,7 @@
   (:require [environ.core :as e])
   (:require [clj-time.core :as t])
   (:require [clj-time.coerce :as c])
+  (:require [clj-time.format :as f])
   (:require [neo4j-meetup.db :as db])
   (:require [clojurewerkz.neocons.rest :as nr]
             [clojurewerkz.neocons.rest.transaction :as tx]))
@@ -98,14 +99,22 @@
 (defn load-json [file]
   (json/read-str (slurp file) :key-fn keyword))
 
-(defn save-other-groups []
-  (doseq [id (map :id (load-json "data/groups-2014-05-14.json"))]
-    (save (str "data/members-2014-05-14/" id ".json")
-          (get-all members-of-other-group {:groupid id}))))
+(defn timed [fn description]
+  (println (str description ":" (with-out-str (time (fn))))))
+
+(defn save-other-groups [date]
+  (.mkdir (java.io.File. (str "data/members-" date)))
+  (doseq [id (map :id (load-json (str "data/groups-" date ".json")))]
+    (timed #(save (str "data/members-" date "/" id ".json")
+                  (get-all members-of-other-group {:groupid id})) (str "group " id))))
+
+(def format-as-year-month-day (f/formatter "yyyy-MM-dd"))
 
 (defn -main [& args]
-  (save "data/groups-2004-05-14.json" (get-all groups))
-  (save "data/members-2014-05-13.json" (get-all members))
-  (save "data/events-2014-05-13.json" (get-all events))
-  (save "data/rsvps-2014-05-13.json"
-        (mapcat #(get-all (partial rsvps %)) (map :id (load-json "data/events-2014-05-13.json")))))
+  (let [date (f/unparse format-as-year-month-day (t/now))]
+    (timed #(save (str "data/groups-" date ".json") (get-all groups)) "groups")
+    (save-other-groups date)
+    (timed #(save (str "data/events-" date ".json") (get-all events)) "events")
+    (timed #(save (str "data/rsvps-" date ".json")
+                  (mapcat (fn [data] ( get-all (partial rsvps data)))
+                         (map :id (load-json (str "data/events-" date ".json"))))) "rsvps") ))
