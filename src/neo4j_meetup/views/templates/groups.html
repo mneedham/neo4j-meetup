@@ -1,0 +1,26 @@
+{% extends "neo4j_meetup/views/templates/base.html" %}
+{% block content %}
+  <div class="row-fluid" id="groups">
+    <h3>London NoSQL User Groups</h3>
+    <table class="table sortable" id="groups">
+      <thead>
+          <tr>
+            <th>Name</th>
+            <th>Members</th>
+            <th>%</th>
+          </tr>
+      </thead>  
+      <tbody>
+        {% for row in result %}
+        <tr>
+          <td width="70%" class="name"><a href="/groups/{{row.group.data.id}}">{{row.group.data.name}}</a></td>
+          <td class="count">{{row.members}}</td>
+          <td class="count">{{row.percentage}}</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+
+{% endblock %}

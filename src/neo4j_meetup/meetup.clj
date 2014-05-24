@@ -55,6 +55,18 @@
                       (+ (-> % :event :data :time) (-> % :event :data :utc_offset)))))
      first)))
 
+(defn all-groups []
+  (let [ query "
+                MATCH (m:MeetupProfile)
+                WITH COUNT(m) AS allMembers
+                MATCH (m:MeetupProfile)-[:MEMBER_OF]->(group)
+                WITH group, count(m) as members, allMembers
+                RETURN group,
+                       members,
+                       round(members * 10000.0 / allMembers) / 100 as percentage
+                "]
+    (->> (db/cypher query {}))))
+
 (defn all-members []
   (let [ query "MATCH (profile:MeetupProfile)-[:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
                 OPTIONAL MATCH (profile)-[r:RSVPD]->(rsvp {response: 'yes'})-[:TO]->(e)

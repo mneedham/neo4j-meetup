@@ -37,4 +37,8 @@ ul li.tab:before { content: ""; padding: 0 .1em 0 0.5em; }
 .cloud { margin: 0; }
 .cloud li { display: inline; }
 
-
+/* Sortable tables */
+table.sortable thead {
+     font-weight: bold;
+    cursor: default;
+}

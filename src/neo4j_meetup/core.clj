@@ -102,13 +102,15 @@
 (defn timed [fn description]
   (println (str description ":" (with-out-str (time (fn))))))
 
+(def format-as-year-month-day (f/formatter "yyyy-MM-dd"))
+
 (defn save-other-groups [date]
   (.mkdir (java.io.File. (str "data/members-" date)))
   (doseq [id (map :id (load-json (str "data/groups-" date ".json")))]
     (timed #(save (str "data/members-" date "/" id ".json")
                   (get-all members-of-other-group {:groupid id})) (str "group " id))))
 
-(def format-as-year-month-day (f/formatter "yyyy-MM-dd"))
+
 
 (defn -main [& args]
   (let [date (f/unparse format-as-year-month-day (t/now))]

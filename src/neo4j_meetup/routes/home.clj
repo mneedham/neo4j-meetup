@@ -30,7 +30,6 @@
 (add-filter! :guestify #(if (= % 0) "-" %))
 
 (defn choose-tag-size [freq]
-  (println (str "*****" freq))
   (cond (> freq 40) 10
         (> freq 30) 9
         (> freq 20) 8
@@ -54,6 +53,11 @@
         (layout/render
          "member.html" {:result result}))))
 
+(defn groups-page []
+(let [result (meetup/all-groups)]
+       (layout/render
+        "groups.html" {:result result})))
+
 (defn venues-page [venue-id]
   (let [result (meetup/venue venue-id) ]
    (layout/render
@@ -66,6 +70,7 @@
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
   (GET "/members" [] (members-page))
+  (GET "/groups" [] (groups-page))  
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))
   (GET "/about" [] (about-page)))
