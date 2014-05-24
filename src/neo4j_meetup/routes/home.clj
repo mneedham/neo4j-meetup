@@ -77,6 +77,7 @@
   (GET "/events/:id" [id] (events-page id))
   (GET "/members" [] (members-page))
   (GET "/groups" [] (groups-page))
+  (GET "/groups/overlap" []  {:body  (meetup/group-overlap)})
   (GET "/groups/:id" [id] (groups-page id))  
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))

@@ -6,7 +6,7 @@
     <label>Members</label>
     <span>{{result.members}}</span>
     </div>
-    <div>
+    <div class="col-md-6">
       <svg id="test1" style="height:500px;width:400px"></svg>
     </div>
 
@@ -15,8 +15,8 @@
       nv.addGraph(function() {
         var chart = nv.models.pieChart()
            .x(function(d) { return d.label })
-           .y(function(d) { return d.value })
-           .showLabels(false);
+           .y(function(d) { return Math.round(d.value) })
+           .showLabels(true).labelType("percent");
 
         d3.select("#test1")
           .datum([

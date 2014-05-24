@@ -76,13 +76,29 @@
   (let [ query "
                 MATCH (m:MeetupProfile)
                 WITH COUNT(m) AS allMembers
-                MATCH (m:MeetupProfile)-[:MEMBER_OF]->(group)
+                MATCH (m)-[:MEMBER_OF]->(group:Group)
                 WITH group, count(m) as members, allMembers
                 RETURN group,
                        members,
                        round(members * 10000.0 / allMembers) / 100 as percentage
+                ORDER BY group.name
                 "]
     (->> (db/cypher query {}))))
+
+
+(defn group-overlap []
+  (let [ query "
+                MATCH (g1:Group), (g2:Group)
+                OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
+
+                WITH g1, g2, CASE WHEN path is null THEN 0 ELSE COUNT(path) END AS overlap
+                ORDER BY g1.name, g2.name
+
+                RETURN g1, COLLECT(overlap) AS overlap
+                ORDER BY g1.name
+                "]
+    (->> (db/cypher query {}))))
+
 
 (defn all-members []
   (let [ query "MATCH (profile:MeetupProfile)-[:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
