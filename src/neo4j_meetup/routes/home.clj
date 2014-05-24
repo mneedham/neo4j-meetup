@@ -60,7 +60,6 @@
          "groups.html" {:result result})))
   ([group-id]
      (let [result (meetup/group group-id)]
-       (println (str "*****" result "+++++"))
     (layout/render
      "group.html" {:result result}))))
 
