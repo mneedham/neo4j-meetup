@@ -4,10 +4,6 @@
     <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Neo4j London Meetup</title>
 
-   <script src="/js/sorttable.js"></script>
-    <script src="/js/d3.js"></script>
-    <script src="/js/nv.d3.js"></script>
-
   </head>
   <body>
     <!-- navbar -->
@@ -39,9 +35,16 @@
     <script src="//code.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
 
     {% script "/js/bootstrap.min.js" %}
+   <script src="/js/sorttable.js"></script>
+    <script src="/js/d3.js"></script>
+    <script src="/js/nv.d3.js"></script>
+
     <script type="text/javascript">
       var context = "{{servlet-context}}";
     </script>
+
+    {% block javascript %}
+    {% endblock %}
   </body>
 </html>
 

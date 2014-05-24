@@ -3,14 +3,25 @@
   <div class="row-fluid">
     <h3>{{result.group.data.name}}</h3>
     <div>
-    <label>Members</label>
-    <span>{{result.members}}</span>
+    <div class="col-md-6">
+      <label>Members</label>
+      <span>{{result.members}}</span>
     </div>
     <div class="col-md-6">
-      <svg id="test1" style="height:500px;width:400px"></svg>
+      <svg id="test1" style="height:400px;width:400px"></svg>
     </div>
 
-    <script type="text/javascript">
+
+    </div>
+
+    
+
+    <div>
+
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
       //Regular pie chart example
       nv.addGraph(function() {
         var chart = nv.models.pieChart()
@@ -29,9 +40,6 @@
         return chart;
       });
     </script>
-
-
-    <div>
 
 {% endblock %}
 
