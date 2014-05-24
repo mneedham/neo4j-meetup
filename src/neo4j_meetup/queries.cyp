@@ -269,3 +269,11 @@ RETURN group1.name, group2.name, commonMembers, combinedMembers, round(10000.0 *
 
 ORDER BY percentage DESC
 
+// other groups with our keywords
+MATCH (:Group {name: "Neo4j - London User Group"})-[:HAS_TOPIC]->(topic)<-[:HAS_TOPIC]-(other),
+
+WITH  other, COUNT(*) AS freq, COLLECT(topic.name) AS topics
+MATCH (other)<-[:MEMBER_OF]-()
+
+RETURN other.name, freq, topics, COUNT(*) AS members
+ORDER BY freq DESC, members DESC

@@ -6,7 +6,24 @@
   { :formatted-time (timestamp/as-time timestamp)
     :formatted-date (timestamp/as-date timestamp) })
 
-(defn all-events [meetup-name]
+(defn group [group-id]
+  (let [query "
+                MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})
+                OPTIONAL MATCH (m)-[:MEMBER_OF]->(other)
+                WITH m, COUNT(m) as members, group
+                WITH group, COLLECT({member:m, groups: members}) AS memberGroups
+                WITH group,
+                       LENGTH([x in memberGroups WHERE x.groups = 1]) AS thisGroupOnly,
+                       LENGTH([x in memberGroups  WHERE x.groups > 1]) AS otherGroups
+                RETURN group, thisGroupOnly, otherGroups,
+                       (thisGroupOnly + otherGroups) AS members       
+"
+        params {:groupId (read-string group-id)}]
+    (->>
+     (db/cypher query params)
+     first)))
+
+(defn all-events [meetup-id]
   (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)

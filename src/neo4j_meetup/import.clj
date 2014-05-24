@@ -67,6 +67,8 @@
                          :name (:name member)
                          :bio (:bio member)
                          :joined (:joined member)
+                         :photolink (->> member :photo :photo_link)
+                         :thumbnail (->> member :photo :thumb_link)
                          }
                 :groupid (:groupid member)
                 :timetree (as-timetree (:joined member))
@@ -261,12 +263,10 @@
   (json/read-str (slurp file) :key-fn keyword))
 
 (defn member-files [dir]
-  (filter #(.isFile %)
-          (file-seq (clojure.java.io/file dir))) )
+  (filter #(.isFile %) (file-seq (clojure.java.io/file dir))) )
 
 (defn extract-group-id [file-name]
   (read-string (clojure.string/replace (.getName file-name) #".json" "")))
-
 
 (defn timed [fn description]
   (println (str description ":" (with-out-str (time (fn))))))
@@ -283,8 +283,7 @@
 
 (defn -main [& args]
   (let [date (nth args 0)
-        member-files
-        (member-files (str "data/members-" date))]
+        member-files (member-files (str "data/members-" date))]
     (timed clear-all "clear")
     (timed #(create-time-tree 2011 2014) "time-tree")
     (timed #(import-topics member-files) "topics")

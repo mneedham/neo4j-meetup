@@ -53,10 +53,16 @@
         (layout/render
          "member.html" {:result result}))))
 
-(defn groups-page []
-(let [result (meetup/all-groups)]
-       (layout/render
-        "groups.html" {:result result})))
+(defn groups-page
+  ([]
+     (let [result (meetup/all-groups)]
+        (layout/render
+         "groups.html" {:result result})))
+  ([group-id]
+     (let [result (meetup/group group-id)]
+       (println (str "*****" result "+++++"))
+    (layout/render
+     "group.html" {:result result}))))
 
 (defn venues-page [venue-id]
   (let [result (meetup/venue venue-id) ]
@@ -70,7 +76,8 @@
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
   (GET "/members" [] (members-page))
-  (GET "/groups" [] (groups-page))  
+  (GET "/groups" [] (groups-page))
+  (GET "/groups/:id" [id] (groups-page id))  
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))
   (GET "/about" [] (about-page)))

@@ -1,0 +1,37 @@
+{% extends "neo4j_meetup/views/templates/base.html" %}
+{% block content %}
+  <div class="row-fluid">
+    <h3>{{result.group.data.name}}</h3>
+    <div>
+    <label>Members</label>
+    <span>{{result.members}}</span>
+    </div>
+    <div>
+      <svg id="test1" style="height:500px;width:400px"></svg>
+    </div>
+
+    <script type="text/javascript">
+      //Regular pie chart example
+      nv.addGraph(function() {
+        var chart = nv.models.pieChart()
+           .x(function(d) { return d.label })
+           .y(function(d) { return d.value })
+           .showLabels(false);
+
+        d3.select("#test1")
+          .datum([
+            {"label": "This Group Only", "value": "{{result.thisGroupOnly}}"}, 
+            {"label": "Member of other group", "value": "{{result.otherGroups}}"}, 
+            ])
+          .transition().duration(350)
+          .call(chart);
+
+        return chart;
+      });
+    </script>
+
+
+    <div>
+
+{% endblock %}
+

@@ -110,8 +110,6 @@
     (timed #(save (str "data/members-" date "/" id ".json")
                   (get-all members-of-other-group {:groupid id})) (str "group " id))))
 
-
-
 (defn -main [& args]
   (let [date (f/unparse format-as-year-month-day (t/now))]
     (timed #(save (str "data/groups-" date ".json") (get-all groups)) "groups")
