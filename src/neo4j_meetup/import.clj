@@ -10,8 +10,8 @@
 (defn clear-all []
   (db/tx-api-single "
     MATCH (n)
-    OPTIONAL MATCH (n)-[r]-(m)
-    DELETE n,r,m")
+    OPTIONAL MATCH (n)-[r]->()
+    DELETE n,r")
   (db/tx-api-single "CREATE INDEX ON :Person(meetupId)")
   (db/tx-api-single "CREATE INDEX ON :MeetupProfile(id)")
   (db/tx-api-single "CREATE INDEX ON :Group(id)")
@@ -46,14 +46,21 @@
                     MERGE (m:MeetupProfile {id: {person}.id})
                     ON CREATE SET m = {person}
                     MERGE (p)-[:HAS_MEETUP_PROFILE]->(m)
+
                     WITH p, m
                     MATCH (g:Group {id: {groupid}})
-                    MERGE (m)-[:MEMBER_OF]->(g)
-                    WITH p,m
+                    MERGE (m)-[:MEMBER_OF]->(g)                    
+
+                    WITH p,m,g
+                    CREATE (membership:Membership {joined: {joined}})
+                    MERGE (m)-[:HAS_MEMBERSHIP]->(membership)
+                    MERGE (membership)-[:OF_GROUP]->(g)
+
+                    WITH membership, p
                     MATCH (year:Year {year: {timetree}.year }),
                           (year)-[:HAS_MONTH]->(month {month: {timetree}.month }),
                           (month)-[:HAS_DAY]->(day {day: {timetree}.day })
-                    CREATE (m)-[:JOINED_ON]->(day) "
+                    CREATE (membership)-[:ON_DATE]->(day) "
                     (if (:twitter social-media)
                       "MERGE (twitter:Twitter {id: {socialmedia}.twitter.identifier })
                        MERGE (p)-[:HAS_TWITTER_ACCOUNT]->(twitter) "
@@ -65,11 +72,11 @@
         params {:person {
                          :id (:id member)
                          :name (:name member)
-                         :bio (:bio member)
-                         :joined (:joined member)
+                         :bio (:bio member)                         
                          :photolink (->> member :photo :photo_link)
                          :thumbnail (->> member :photo :thumb_link)
                          }
+                :joined (:joined member)
                 :groupid (:groupid member)
                 :timetree (as-timetree (:joined member))
                 :socialmedia social-media

@@ -82,6 +82,7 @@ d3.json("/groups/overlap", function(miserables) {
         var links = node.overlap;
         links.forEach(function(value, j) {
             value = value / 5;
+            if(value == 0) { value = 0.01; }
             matrix[i][j].z = value;
         });
     });
