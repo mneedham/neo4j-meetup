@@ -2,47 +2,50 @@
 {% block content %}
   <div class="row-fluid">
     <h3>{{result.member.data.name}} <a href="http://www.meetup.com/graphdb-london/members/{{result.member.data.id}}"
-    target="_blank"><img src="/img/external.jpg" width="15px" /></a></h3>
-    
+    target="_blank"><img src="/img/external.jpg" width="15px" /></a></h3>    
     <div>
-<label>Bio</label>
-        {{result.member.data.bio}}
+
+<ul class="nav nav-tabs">
+  <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
+  <li class="tab"><a href="#groups" data-toggle="tab">Groups</a></li>
+  <li class="tab"><a href="#rsvps" data-toggle="tab">RSVPs</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="overview">
+    <label>Bio</label>
+    <div>    {{result.member.data.bio}} </div>
+   
+    <label>Interested in</label>
+    <div>
+      <ul>
+        {% for topic in result.topics %}
+        <li> <a href="/topics/{{topic.data.id}}">{{ topic.data.name }}</a></li>
+        {% endfor %}
+      </ul>
     </div>
-    <div>
-<label>
-Joined
-</label>
-       {{result.membership.data.joined|timestamp-to-date}}
-    <div>
+  </div>
 
-<label>
-Interested in
-</label>
-<div>
+  <div class="tab-pane" id="groups">
+     <table class="table">
+       <thead>
+         <th>Group</th>
+         <th>Join Date</th>
 
+       </thead>
+       <tbody>
+           {% for group in result.groups %}
+           <tr>
+            <td>         <a href="/groups/{{group.group.data.id}}">{{group.group.data.name
+         }}</a></td>
+            <td>{{group.membership.data.joined|timestamp-to-date}}</td>
 
-   <ul>
-     {% for topic in result.topics %}
-       <li> <a href="/topics/{{topic.data.id}}">{{ topic.data.name }}</a></li>
-     {% endfor %}
-   </ul>
-</div>
-
-<label>
-Member of
-</label>
-<div>
-
-
-   <ul>
-     {% for group in result.groups %}
-       <li> <a href="/groups/{{group.data.id}}">{{ group.data.name }}</a></li>
-     {% endfor %}
-   </ul>
-</div>
-
-
-     <h4>RSVPs</h4>
+           </tr>
+        {% endfor %}
+      </tbody>
+     </table>
+  </div>
+  <div class="tab-pane" id="rsvps">
      <table class="table">
        <thead>
          <th>Title</th>
@@ -65,11 +68,5 @@ Member of
       </tbody>
      </table>
 
-
-    
-</div>
-
-
-    </div>
   </div>
 {% endblock %}

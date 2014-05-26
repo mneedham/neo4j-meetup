@@ -115,18 +115,24 @@
     (->> (db/cypher query {}))))
 
 (defn member [member-id]
-  (let [query "MATCH (member:MeetupProfile {id: {memberId}})
+  (let [query "
+
+               MATCH (member:MeetupProfile {id: {memberId}})
                OPTIONAL MATCH (member)-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(group)
-               WITH member, COLLECT(group) AS groups, membership
+               WITH member, group, membership
+               ORDER BY membership.joined
+
+               WITH member, COLLECT({group: group, membership: membership}) AS groups
                OPTIONAL MATCH (member)-[:INTERESTED_IN]->(topic)
-               WITH member, COLLECT(topic) as topics, groups, membership
+               WITH member, COLLECT(topic) as topics, groups
                OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
-               WITH member, membership, rsvp, event, initial, topics, groups           
+               WITH member, rsvp, event, initial, topics, groups           
                ORDER BY event.time
                
-               RETURN member, membership,
-                      COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics, groups"
+               RETURN member, 
+                      COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics, groups
+"
         params {:memberId (read-string member-id)}]
     (->>
      (db/cypher query params)
