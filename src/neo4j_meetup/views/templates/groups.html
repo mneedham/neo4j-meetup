@@ -6,6 +6,7 @@
 <ul class="nav nav-tabs">
   <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
   <li class="tab"><a href="#overlap" data-toggle="tab">Overlap</a></li>
+  <li class="tab"><a href="#headtohead" data-toggle="tab">Head to Head</a></li>
 </ul>
   <div class="tab-content">
     <div class="tab-pane active" id="overview">
@@ -33,6 +34,29 @@
 
     <div class="tab-pane" id="overlap">
     </div>
+
+    <div class="tab-pane" id="headtohead">
+      <h4>Show overlap of members in following groups:</h4>
+      <form name="headToHead" id="headToHead">
+        <ul>
+        {% for row in result %}
+          <li>
+          <label class="checkbox-inline">
+            <input type="checkbox" id="checkbox_{{row.group.data.id}}" value="{{row.group.data.id}}"> {{row.group.data.name}}
+          </label>
+          </li>
+        {% endfor %}
+        </ul>
+
+        <div>
+          <input class="btn btn-default" type="submit" value="Re-draw">
+        </div>
+
+      </form>
+
+       <div class="simple_example"></div>
+    </div>
+
 
   </div>
 
@@ -86,8 +110,6 @@ d3.json("/groups/overlap", function(miserables) {
             matrix[i][j].z = value;
         });
     });
-
-  console.log(matrix);
 
   // Precompute the orders.
   var orders = {
@@ -181,6 +203,33 @@ d3.json("/groups/overlap", function(miserables) {
         .delay(function(d, i) { return x(i) * 4; })
         .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
   }
+});
+
+$("#headToHead").submit(function(e) {
+  e.preventDefault();
+  var checkedItems = $("#headToHead input[type=checkbox]:checked");
+
+  var items = [];
+  $.each(checkedItems, function(idx, item) {
+    items.push(this.value);
+  });
+
+  var queryString = "/groups/overlap/" + items.join(",");
+
+  d3.json(queryString, function(data) {
+    // define sets and set set intersections
+    var sets = data.sets,
+    overlaps = data.overlaps;
+
+    // get positions for each set
+    sets = venn.venn(sets, overlaps);
+
+    // draw the diagram in the 'simple_example' div
+    venn.drawD3Diagram(d3.select(".simple_example"), sets, 300, 300);
+    console.log(data);
+  });
+                                                   
+  return false;
 });
 
 

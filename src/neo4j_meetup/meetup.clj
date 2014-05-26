@@ -189,8 +189,9 @@
     (->> (db/cypher query {}))))
 
 
-(defn group-overlap []
-  (let [ query "
+(defn group-overlap
+  ([]
+      (let [ query "
                 MATCH (g1:Group), (g2:Group)
                 OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
 
@@ -200,7 +201,10 @@
                 RETURN g1, COLLECT(overlap) AS overlap
                 ORDER BY g1.name
                 "]
-    (->> (db/cypher query {}))))
+        (->> (db/cypher query {}))))
+  ([ids]
+     {:sets [{:label "MongoDB" :size 7000} {:label "Neo4j" :size 6200}]
+      :overlaps [{:sets [0 1] :size 200}]}))
 
 
 (defn all-members []
