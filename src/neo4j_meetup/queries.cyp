@@ -219,7 +219,14 @@ OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
 WITH g1, g2, CASE WHEN path is null THEN 0 ELSE COUNT(path) END AS overlap
 ORDER BY g1.name, g2.name
 
-RETURN g1.name, COLLECT(overlap)
+RETURN g1.name, COLLECT(overlap) AS overlap
+ORDER BY g1.nameMATCH (g1:Group), (g2:Group)
+OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2)
+
+WITH g1, g2, CASE WHEN path is null THEN 0 ELSE COUNT(path) END AS overlap
+ORDER BY g1.name, g2.name
+
+RETURN g1.name, COLLECT(overlap) AS overlap
 ORDER BY g1.name
 
 // adjacency matrix of top 5
@@ -270,10 +277,45 @@ RETURN group1.name, group2.name, commonMembers, combinedMembers, round(10000.0 *
 ORDER BY percentage DESC
 
 // other groups with our keywords
-MATCH (:Group {name: "Neo4j - London User Group"})-[:HAS_TOPIC]->(topic)<-[:HAS_TOPIC]-(other),
+MATCH (:Group {name: "Neo4j - London User Group"})-[:HAS_TOPIC]->(topic)<-[:HAS_TOPIC]-(other)
 
 WITH  other, COUNT(*) AS freq, COLLECT(topic.name) AS topics
 MATCH (other)<-[:MEMBER_OF]-()
 
 RETURN other.name, freq, topics, COUNT(*) AS members
 ORDER BY freq DESC, members DESC
+
+// create relationship between adjacent memberships
+MATCH (membership:Membership)<-[:HAS_MEMBERSHIP]-(meetupProfile)
+
+WITH meetupProfile, membership
+ORDER BY id(meetupProfile), membership.joined
+
+WITH meetupProfile, COLLECT(membership) AS memberships
+
+UNWIND reduce(acc=[], x in range(1,length(memberships) -1) | acc+ { one: memberships[x-1], two: memberships[x]}) AS pair 
+WITH pair.one AS p1, pair.two AS p2
+CREATE (p1)-[:NEXT]->(p2)
+
+// what groups do people join consecutively
+MATCH (group1:Group), (group2:Group)
+MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembership)-[:OF_GROUP]->(group2)
+RETURN group1.name, group2.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+LIMIT 20
+
+// what was after neo?
+
+MATCH (group1:Group {name: "Neo4j - London User Group"}), (group2:Group)
+OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembership)-[:OF_GROUP]->(group2)
+RETURN group2.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+LIMIT 20
+
+// what was before neo?
+
+MATCH (group1:Group), (group2:Group {name: "Neo4j - London User Group"})
+OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembership)-[:OF_GROUP]->(group2)
+RETURN group1.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+LIMIT 20

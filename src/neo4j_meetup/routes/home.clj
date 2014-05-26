@@ -59,9 +59,10 @@
         (layout/render
          "groups.html" {:result result})))
   ([group-id]
-     (let [result (meetup/group group-id)]
-    (layout/render
-     "group.html" {:result result}))))
+     (let [result (meetup/group group-id)
+           topics (meetup/group-topics group-id)]
+       (layout/render
+     "group.html" {:result result :topics topics}))))
 
 (defn venues-page [venue-id]
   (let [result (meetup/venue venue-id) ]

@@ -23,6 +23,26 @@
      (db/cypher query params)
      first)))
 
+(defn group-topics [group-id]
+  (let [query "
+                MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}}),
+                      (m)-[:INTERESTED_IN]-(topic)
+                RETURN topic,
+                       COUNT(*) as count,
+                       CASE
+                         WHEN LENGTH((group)-[:HAS_TOPIC]->(topic)) = 0
+                           THEN false
+                         ELSE true
+                         END AS groupHasTopic
+                ORDER BY count DESC
+                LIMIT 50
+
+"
+        params {:groupId (read-string group-id)}]
+    (->>
+     (db/cypher query params)
+     )))
+
 (defn all-events [meetup-id]
   (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)

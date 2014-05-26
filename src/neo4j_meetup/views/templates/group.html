@@ -2,21 +2,46 @@
 {% block content %}
   <div class="row-fluid">
     <h3>{{result.group.data.name}}</h3>
+
+<ul class="nav nav-tabs">
+  <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
+  <li class="tab"><a href="#topics" data-toggle="tab">Topics</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="overview">
     <div>
-    <div class="col-md-6">
-      <label>Members</label>
-      <span>{{result.members}}</span>
+      <div class="col-md-6">
+        <label>Members</label>
+        <span>{{result.members}}</span>
+      </div>
+      <div class="col-md-6">
+        <svg id="test1" style="height:400px;width:400px"></svg>
+      </div>
     </div>
-    <div class="col-md-6">
-      <svg id="test1" style="height:400px;width:400px"></svg>
-    </div>
+  </div>
 
-
-    </div>
-
-    
-
-    <div>
+  <div class="tab-pane" id="topics">
+     <table class="table">
+       <thead>
+         <th>Topic</th>
+         <th>Members</th>
+         <th></th>
+       </thead>
+       <tbody>
+           {% for row in topics %}
+           <tr>
+            <td width="80%">
+              <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
+            </td>
+            <td>{{row.count}}</td>
+            <td><img src="/img/{{row.groupHasTopic}}.png" width="20px" /></td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+  </div>
+</div>
 
 {% endblock %}
 

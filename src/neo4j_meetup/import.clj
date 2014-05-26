@@ -240,6 +240,21 @@
                   MATCH (v2:Venue {id: 10185422})
                   MERGE (v1)-[:ALIAS_OF]->(v2)"))
 
+(defn link-adjacent-memberships []
+  (db/tx-api-single "
+    MATCH (membership:Membership)<-[:HAS_MEMBERSHIP]-(meetupProfile)
+
+    WITH meetupProfile, membership
+    ORDER BY id(meetupProfile), membership.joined
+
+    WITH meetupProfile, COLLECT(membership) AS memberships
+
+    UNWIND reduce(acc=[], x in range(1,length(memberships) -1) |
+      acc+ { one: memberships[x-1], two: memberships[x]}) AS pair 
+    WITH pair.one AS p1, pair.two AS p2
+    CREATE (p1)-[:NEXT]->(p2)
+"))
+
 (defn changed-mind? [rsvp]
   (not (= (:created rsvp) (:mtime rsvp))))
 
@@ -309,4 +324,5 @@
                        (rsvps-with-responses
                         (load-json (str "data/rsvps-" date ".json"))))
            "rsvps")
-    (timed #(link-credo-venues) "credo venues")))
+    (timed #(link-credo-venues) "credo venues")
+    (timed #(link-adjacent-memberships) "adjacent memberships")))
