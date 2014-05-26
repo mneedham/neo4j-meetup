@@ -26,6 +26,7 @@
        <thead>
          <th>Topic</th>
          <th>Members</th>
+         <th>%</th>
          <th></th>
        </thead>
        <tbody>
@@ -35,6 +36,7 @@
               <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
             </td>
             <td>{{row.count}}</td>
+            <td>{{row.percentage}}</td>
             <td><img src="/img/{{row.groupHasTopic}}.png" width="20px" /></td>
            </tr>
      {% endfor %}

@@ -24,16 +24,25 @@
      first)))
 
 (defn group-topics [group-id]
-  (let [query "
-                MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}}),
-                      (m)-[:INTERESTED_IN]-(topic)
+  (let [query "                
+                MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})
+
+                WITH COLLECT(m) AS members, group
+                UNWIND members AS m
+                MATCH (m)-[:INTERESTED_IN]-(topic)
+
+                WITH topic,
+                     COUNT(*) as count,
+                     LENGTH(members) AS numberOfMembers,
+                     CASE
+                       WHEN LENGTH((group)-[:HAS_TOPIC]->(topic)) = 0 THEN false
+                       ELSE true
+                       END AS groupHasTopic,
+                     10^2 AS factor
                 RETURN topic,
-                       COUNT(*) as count,
-                       CASE
-                         WHEN LENGTH((group)-[:HAS_TOPIC]->(topic)) = 0
-                           THEN false
-                         ELSE true
-                         END AS groupHasTopic
+                       count,
+                       round((count * 100.0 / numberOfMembers) * factor) / factor AS percentage,
+                       groupHasTopic
                 ORDER BY count DESC
                 LIMIT 50
 
