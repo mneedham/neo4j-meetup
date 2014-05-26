@@ -4,12 +4,18 @@
     <h3>{{result.topic.data.name}}</h3>
 
 <ul class="nav nav-tabs">
-  <li class="active tab"><a href="#meetups" data-toggle="tab">Meetups</a></li>
-  <li class="tab"><a href="#topics" data-toggle="tab">Topics</a></li>
+  <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
+  <li class="tab"><a href="#meetups" data-toggle="tab">Meetups</a></li>
+  <li class="tab"><a href="#topics" data-toggle="tab">Other Topics</a></li>
 </ul>
 
 <div class="tab-content">
-  <div class="tab-pane active" id="meetups">
+  <div class="tab-pane active" id="overview">
+    <label>Members</label>
+    <div>{{result.interestedPeople}}</div>
+  </div>
+
+  <div class="tab-pane" id="meetups">
      <table class="table">
        <thead>
          <th>Meetup</th>
@@ -33,19 +39,15 @@
      <table class="table">
        <thead>
          <th>Topic</th>
-         <th>Members</th>
-         <th>%</th>
-         <th></th>
+         <th>Common Members</th>
        </thead>
        <tbody>
            {% for row in topics %}
            <tr>
             <td width="80%">
-              <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
+              <a href="/topics/{{row.other.data.id}}">{{row.other.data.name}}</a>
             </td>
-            <td>{{row.count}}</td>
-            <td>{{row.percentage}}</td>
-            <td><img src="/img/{{row.groupHasTopic}}.png" width="20px" /></td>
+            <td>{{row.members}}</td>
            </tr>
      {% endfor %}
       </tbody>

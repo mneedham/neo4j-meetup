@@ -6,6 +6,7 @@
 <ul class="nav nav-tabs">
   <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
   <li class="tab"><a href="#topics" data-toggle="tab">Topics</a></li>
+  <li class="tab"><a href="#otherGroups" data-toggle="tab">Other Groups</a></li>
 </ul>
 
 <div class="tab-content">
@@ -43,6 +44,33 @@
       </tbody>
      </table>
   </div>
+
+  <div class="tab-pane" id="otherGroups">
+     <table class="table">
+       <thead>
+         <th>Group</th>
+         <th>Common Members</th>
+         <th>Combined Members</th>
+         <th>%</th>
+         <th></th>
+       </thead>
+       <tbody>
+           {% for row in otherGroups %}
+           <tr>
+            <td width="50%">
+              <a href="/groups/{{row.group2.data.id}}">{{row.group2.data.name}}</a>
+            </td>
+            <td>{{row.commonMembers}}</td>
+            <td>{{row.combinedMembers}}</td>
+            <td>{{row.percentage}}</td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+  </div>
+
+
+
 </div>
 
 {% endblock %}

@@ -60,17 +60,22 @@
          "groups.html" {:result result})))
   ([group-id]
      (let [result (meetup/group group-id)
-           topics (meetup/group-topics group-id)]
+           topics (meetup/group-topics group-id)
+           other-groups (meetup/other-groups group-id)]
        (layout/render
-     "group.html" {:result result :topics topics}))))
+     "group.html" {:result result :topics topics :otherGroups other-groups}))))
 
 (defn topics-page
-
+  ([]
+     (let [result (meetup/all-topics)]
+        (layout/render
+         "topics.html" {:result result})))
   ([topic-id]
      (let [result (meetup/topic topic-id)
+           topics (meetup/topic-overlap topic-id)
            ]
        (layout/render
-     "topic.html" {:result result}))))
+     "topic.html" {:result result :topics topics}))))
 
 (defn venues-page [venue-id]
   (let [result (meetup/venue venue-id) ]
@@ -87,7 +92,8 @@
   (GET "/groups" [] (groups-page))
   (GET "/groups/overlap" []  {:body  (meetup/group-overlap)})
   (GET "/groups/:id" [id] (groups-page id))
-  (GET "/topics/:id" [id] (topics-page id))    
+  (GET "/topics/:id" [id] (topics-page id))
+  (GET "/topics" [] (topics-page))      
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))
   (GET "/about" [] (about-page)))

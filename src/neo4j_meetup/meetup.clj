@@ -23,18 +23,37 @@
      (db/cypher query params)
      first)))
 
-(defn topic [topic-id]
-  (let [query "
-                MATCH (topic:Topic {id: {topicId}})<-[:HAS_TOPIC]-(group),
-                      (group)<-[:MEMBER_OF]-(member)
-                WITH topic, group, COUNT(*) AS members
-                ORDER BY members DESC
-                RETURN topic, COLLECT({group:group, count:members}) AS groups
+(defn other-groups [group-id]
+  (let [query "                
+    MATCH (group1:Group {id: {groupId}}), (group2:Group)
+    MATCH (group1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(group2)
+
+    WITH group1, group2, COUNT(*) as commonMembers
+    MATCH (group1)<-[:MEMBER_OF]-(group1Member)
+
+    WITH group1, group2, commonMembers, COLLECT(id(group1Member)) AS group1Members
+    MATCH (group2)<-[:MEMBER_OF]-(group2Member)
+
+    WITH group1, group2, commonMembers, group1Members,
+         COLLECT(id(group2Member)) AS group2Members
+    WITH group1, group2, commonMembers, group1Members, group2Members
+
+    UNWIND(group1Members + group2Members) AS combinedMember
+    WITH DISTINCT group1, group2, commonMembers, combinedMember
+
+    WITH group1, group2, commonMembers, COUNT(combinedMember) AS combinedMembers
+
+    RETURN group2,
+           commonMembers,
+           combinedMembers,
+           round(10000.0 * commonMembers / combinedMembers) / 100 as percentage
+    ORDER BY percentage DESC
+
 "
-        params {:topicId (read-string topic-id)}]
+        params {:groupId (read-string group-id)}]
     (->>
      (db/cypher query params)
-     first)))
+     )))
 
 (defn group-topics [group-id]
   (let [query "                
@@ -64,6 +83,47 @@
     (->>
      (db/cypher query params)
      )))
+
+(defn topic-overlap [topic-id]
+  (let [query "
+      MATCH (topic:Topic {id: {topicId}})<-[:INTERESTED_IN]-()-[:INTERESTED_IN]->(other)
+      RETURN other, COUNT(*) as members
+      ORDER BY members DESC
+      LIMIT 50
+
+"
+        params {:topicId (read-string topic-id)}]
+    (->>
+     (db/cypher query params))))
+
+(defn all-topics []
+  (let [query "
+    MATCH (topic:Topic)<-[:INTERESTED_IN]-()
+    RETURN topic, COUNT(*) AS count
+    ORDER BY count DESC
+    LIMIT 50
+    "]
+    (->>
+     (db/cypher query))))
+
+(defn topic [topic-id]
+  (let [query "
+    MATCH (topic:Topic {id: {topicId}})<-[:INTERESTED_IN]-()
+
+    WITH topic, COUNT(*) AS interestedPeople
+    OPTIONAL MATCH (topic)<-[:HAS_TOPIC]-(group)<-[:MEMBER_OF]-(member)
+
+    WITH topic, group, COUNT(*) AS members, interestedPeople
+    ORDER BY members DESC
+    RETURN topic,
+           interestedPeople,
+           COLLECT({group:group, count:members}) AS groups
+
+"
+        params {:topicId (read-string topic-id)}]
+    (->>
+     (db/cypher query params)
+     first)))
 
 (defn all-events [meetup-id]
   (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)

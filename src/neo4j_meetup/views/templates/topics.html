@@ -1,0 +1,36 @@
+{% extends "neo4j_meetup/views/templates/base.html" %}
+{% block content %}
+  <div class="row-fluid" id="groups">
+    <h3>Topics</h3>
+
+<ul class="nav nav-tabs">
+  <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
+</ul>
+  <div class="tab-content">
+    <div class="tab-pane active" id="overview">
+    <table class="table sortable" id="groups">
+      <thead>
+          <tr>
+            <th>Name</th>
+            <th>Members</th>
+          </tr>
+      </thead>  
+      <tbody>
+        {% for row in result %}
+        <tr>
+          <td width="70%" class="name"><a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a></td>
+          <td class="count">{{row.count}}</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+
+     </div>
+
+
+  </div>
+
+  </div>
+
+{% endblock %}
