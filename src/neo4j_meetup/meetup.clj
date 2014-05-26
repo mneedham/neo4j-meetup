@@ -23,6 +23,19 @@
      (db/cypher query params)
      first)))
 
+(defn topic [topic-id]
+  (let [query "
+                MATCH (topic:Topic {id: {topicId}})<-[:HAS_TOPIC]-(group),
+                      (group)<-[:MEMBER_OF]-(member)
+                WITH topic, group, COUNT(*) AS members
+                ORDER BY members DESC
+                RETURN topic, COLLECT({group:group, count:members}) AS groups
+"
+        params {:topicId (read-string topic-id)}]
+    (->>
+     (db/cypher query params)
+     first)))
+
 (defn group-topics [group-id]
   (let [query "                
                 MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})

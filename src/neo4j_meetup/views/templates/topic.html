@@ -1,0 +1,57 @@
+{% extends "neo4j_meetup/views/templates/base.html" %}
+{% block content %}
+  <div class="row-fluid">
+    <h3>{{result.topic.data.name}}</h3>
+
+<ul class="nav nav-tabs">
+  <li class="active tab"><a href="#meetups" data-toggle="tab">Meetups</a></li>
+  <li class="tab"><a href="#topics" data-toggle="tab">Topics</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="meetups">
+     <table class="table">
+       <thead>
+         <th>Meetup</th>
+         <th>Members</th>
+       </thead>
+       <tbody>
+           {% for row in result.groups %}
+           <tr>
+            <td width="80%">
+              <a href="/groups/{{row.group.data.id}}">{{row.group.data.name}}</a>
+            </td>
+            <td>{{row.count}}</td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+     
+  </div>
+
+  <div class="tab-pane" id="topics">
+     <table class="table">
+       <thead>
+         <th>Topic</th>
+         <th>Members</th>
+         <th>%</th>
+         <th></th>
+       </thead>
+       <tbody>
+           {% for row in topics %}
+           <tr>
+            <td width="80%">
+              <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
+            </td>
+            <td>{{row.count}}</td>
+            <td>{{row.percentage}}</td>
+            <td><img src="/img/{{row.groupHasTopic}}.png" width="20px" /></td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+  </div>
+</div>
+
+{% endblock %}
+
