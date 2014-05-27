@@ -91,8 +91,9 @@
   (GET "/members" [] (members-page))
   (GET "/groups" [] (groups-page))
   (GET "/groups/overlap" []  {:body  (meetup/group-overlap)})
-  (GET "/groups/overlap/:ids" [ids]
-       {:body (meetup/group-overlap (clojure.string/split ids #","))})
+  (GET "/groups/overlap/venn" request
+       {:body (meetup/group-overlap
+               (clojure.string/split (get (->> request :query-params) "ids") #","))})
   (GET "/groups/:id" [id] (groups-page id))
   (GET "/topics/:id" [id] (topics-page id))
   (GET "/topics" [] (topics-page))      

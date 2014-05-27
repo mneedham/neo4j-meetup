@@ -46,3 +46,32 @@ table.sortable thead {
      font-weight: bold;
     cursor: default;
 }
+
+table.fill
+{
+    width: 100%;
+    margin: 10px auto;
+    height: 100px;
+    border: 1px solid #999;
+}
+
+td.color
+{
+    height: 100%;
+    text-align:center;
+}
+
+td.left
+{
+    background-color: #ADC6E9;
+}
+
+td.center
+{
+    background-color: Blue;
+}
+
+td.right
+{
+    background-color: #5E9ECB;
+}

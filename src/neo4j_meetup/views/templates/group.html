@@ -12,13 +12,22 @@
 <div class="tab-content">
   <div class="tab-pane active" id="overview">
     <div>
-      <div class="col-md-6">
         <label>Members</label>
         <span>{{result.members}}</span>
-      </div>
-      <div class="col-md-6">
-        <svg id="test1" style="height:400px;width:400px"></svg>
-      </div>
+
+        <table class="fill">
+          <tbody>
+            <tr>
+              <td class="color left"
+              width="{{result.otherGroupsPercentage}}%">Other Groups ({{result.otherGroups}})</td>
+              <td class="color right"
+              width="{{result.thisGroupPercentage}}%">This Group
+              Only ({{result.thisGroupOnly}})</td>
+            </tr>
+         </tbody>
+        </table>
+
+ 
     </div>
   </div>
 
@@ -76,25 +85,6 @@
 {% endblock %}
 
 {% block javascript %}
-<script type="text/javascript">
-      //Regular pie chart example
-      nv.addGraph(function() {
-        var chart = nv.models.pieChart()
-           .x(function(d) { return d.label })
-           .y(function(d) { return Math.round(d.value) })
-           .showLabels(true).labelType("percent");
-
-        d3.select("#test1")
-          .datum([
-            {"label": "This Group Only", "value": "{{result.thisGroupOnly}}"}, 
-            {"label": "Member of other group", "value": "{{result.otherGroups}}"}, 
-            ])
-          .transition().duration(350)
-          .call(chart);
-
-        return chart;
-      });
-    </script>
 
 {% endblock %}
 

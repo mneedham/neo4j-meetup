@@ -20,7 +20,7 @@
     <div>
       <ul>
         {% for topic in result.topics %}
-        <li> <a href="/topics/{{topic.data.id}}">{{ topic.data.name }}</a></li>
+        <li class="arrow"> <a href="/topics/{{topic.data.id}}">{{ topic.data.name }}</a></li>
         {% endfor %}
       </ul>
     </div>
@@ -41,7 +41,7 @@
             <td>{{group.membership.data.joined|timestamp-to-date}}</td>
 
            </tr>
-        {% endfor %}
+     {% endfor %}
       </tbody>
      </table>
   </div>
@@ -68,5 +68,12 @@
       </tbody>
      </table>
 
+  </div>
+
+</div>
+</div>
+
+
+    </div>
   </div>
 {% endblock %}

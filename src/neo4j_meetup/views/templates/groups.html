@@ -214,7 +214,7 @@ $("#headToHead").submit(function(e) {
     items.push(this.value);
   });
 
-  var queryString = "/groups/overlap/" + items.join(",");
+  var queryString = "/groups/overlap/venn?ids=" + items.join(",");
 
   d3.json(queryString, function(data) {
     // define sets and set set intersections
