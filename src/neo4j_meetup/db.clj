@@ -9,7 +9,7 @@
   (:require [clojurewerkz.neocons.rest :as nr]
             [clojurewerkz.neocons.rest.transaction :as tx]))
 
-(def NEO4J_HOST "http://localhost:7512/db/data/")
+(def NEO4J_HOST "http://localhost:7474/db/data/")
 
 (defn tx-api [import-fn coll]
   (nr/connect! NEO4J_HOST)

@@ -225,8 +225,8 @@ $("#headToHead").submit(function(e) {
     sets = venn.venn(sets, overlaps);
 
     // draw the diagram in the 'simple_example' div
-    venn.drawD3Diagram(d3.select(".simple_example"), sets, 300, 300);
-    console.log(data);
+    $(".simple_example svg").remove()
+      venn.drawD3Diagram(d3.select(".simple_example"), sets, 300, 300);
   });
                                                    
   return false;

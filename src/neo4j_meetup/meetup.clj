@@ -21,8 +21,10 @@
         params {:groupId (read-string group-id)}]
     (->>
      (db/cypher query params)
-     (map #(merge % {:thisGroupPercentage (* 100 (float (/ (->> % :thisGroupOnly) (->> % :members))))
-                     :otherGroupsPercentage (* 100 (float (/ (->> % :otherGroups) (->> % :members))))}))
+     (map #(merge % {:thisGroupPercentage
+                     (* 100 (float (/ (->> % :thisGroupOnly) (->> % :members))))
+                     :otherGroupsPercentage
+                     (* 100 (float (/ (->> % :otherGroups) (->> % :members))))}))
      first)))
 
 (defn other-groups [group-id]
@@ -190,6 +192,18 @@
                 "]
     (->> (db/cypher query {}))))
 
+(defn calculate-overlaps [result]
+  (let [items
+        (apply array-map
+               (flatten (map-indexed #(reverse (vector %1 %2))
+                                     (map #(->> % :g1 :data :id) result))))]
+    (mapcat
+          (fn [row] (map (fn [other-row] {:size (->> other-row :overlap)
+                                        :sets [(get items (->> row :g1 :data :id))
+                                               (get items (->> other-row :group :data :id))]})
+                        (->> row :others)) )
+          result)))
+
 
 (defn group-overlap
   ([]
@@ -230,16 +244,11 @@
 
 "
            result (->> (db/cypher query {:ids (map read-string ids)}))]
-       (println result)
        {:sets (map #(-> {:label (->> % :g1 :data :name)
                          :size (->> % :members)}) result)
+        :overlaps (calculate-overlaps result)})))
 
-        :overlaps []
-        
-        :overlaps2 [{:sets [0 1] :size 200}]})))
 
-(defn calculate-overlaps [result]
-  )
 
 (defn all-members []
   (let [ query "MATCH (profile:MeetupProfile)-[:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
