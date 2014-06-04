@@ -3,6 +3,8 @@
   <div class="row-fluid">
     <h3>All Members</h3>
     
+    <div id="dynatable"></div>
+
      <table class="table">
        <thead>
          <th>Name</th>
@@ -21,13 +23,35 @@
            </tr>
      {% endfor %}
       </tbody>
-     </table>
-
-
-    
+     </table>    
 </div>
 
 
     </div>
   </div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/jsx">
+      /**
+       * @jsx React.DOM
+       */
+      var ExampleApplication = React.createClass({
+        render: function() {
+          var elapsed = Math.round(this.props.elapsed  / 100);
+          var seconds = elapsed / 10 + (elapsed % 10 ? '' : '.0' );
+          var message =
+            'React has been successfully running for ' + seconds + ' seconds.';
+
+          return <p>{message}</p>;
+        }
+      });
+      var start = new Date().getTime();
+      setInterval(function() {
+        React.renderComponent(
+          <ExampleApplication elapsed={new Date().getTime() - start} />,
+          document.getElementById('dynatable')
+        );
+      }, 50);
+</script>
 {% endblock %}

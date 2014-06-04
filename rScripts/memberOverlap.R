@@ -1,9 +1,11 @@
 install.packages("devtools")
 devtools::install_github("nicolewhite/Rneo4j")
 install.packages("ggplot2")
+install.packages("seriation")
 
 library(Rneo4j)
 library(ggplot2)
+library(seriation)
 
 graph = startGraph("http://localhost:7474/db/data/")
 
