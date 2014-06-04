@@ -5,25 +5,6 @@
     
     <div id="dynatable"></div>
 
-     <table class="table">
-       <thead>
-         <th>Name</th>
-         <th>Join Date</th>
-         <th>RSVP'd Yes</th>
-         <th>Most Recent Event</th>
-         <th>Event Date</th>
-       </thead>
-       <tbody>
-           {% for row in result %}
-           <tr>
-             <td><a href="/members/{{row.profile.data.id}}">{{row.profile.data.name}}</a></td>             <td>{{row.profile.data.joined|timestamp-to-date}}</td>
-         <td>{{row.rsvps}}</td>
-         <td>{{row.recent.event.data.name}}</td>
-         <td>{{row.recent.event.data.time|timestamp-to-date}}</td>
-           </tr>
-     {% endfor %}
-      </tbody>
-     </table>    
 </div>
 
 
@@ -33,25 +14,110 @@
 
 {% block javascript %}
 <script type="text/jsx">
-      /**
-       * @jsx React.DOM
-       */
-      var ExampleApplication = React.createClass({
+var DynamicTable=React.createClass({
+    Table: React.createClass({
+        formatters: {
+            int: function(value){return value;},
+            timestamp: function(value) { 
+              if(value == undefined) { return "-"; }
+              return new Date(value).toDateString();
+            },
+            float: function(value){return value.toFixed(2);},
+            str: function(value){return value;}
+        },
         render: function() {
-          var elapsed = Math.round(this.props.elapsed  / 100);
-          var seconds = elapsed / 10 + (elapsed % 10 ? '' : '.0' );
-          var message =
-            'React has been successfully running for ' + seconds + ' seconds.';
-
-          return <p>{message}</p>;
+            return React.DOM.table({ className: "table",
+                children: [
+                    React.DOM.thead({
+                        children: React.DOM.tr({
+                            children: this.props.cols.map(function(col) {
+                                return React.DOM.th({children: col.label});
+                            }.bind(this))
+                        })
+                    }),
+                    React.DOM.tbody({
+                        children: this.props.rows.map(function(row, i) {           
+                            return React.DOM.tr({
+                                className: (0==i%2) ? "even" : "odd",
+                                children: this.props.cols.map(function(item) {
+                                    var formatter=this.formatters[item.type];
+                                    return React.DOM.td({
+                                        children: formatter(row[item.key])
+                                    });
+                                }.bind(this))
+                            });
+                        }.bind(this))
+                    })
+                ]
+            });     
         }
+    }),
+    Paginator: React.createClass({
+        // http://stackoverflow.com/questions/3895478/does-javascript-have-a-range-equivalent
+        range: function(n) {
+            return Array.apply(null, Array(n)).map(function (_, i) {return i;});
+        },
+        render: function() {
+            return React.DOM.ul({
+                className: "paginator",
+                children: this.range(this.props.nPages).map(function(i) {
+                    var item={
+                        label: i+1,
+                        key: i
+                    };
+                    return React.DOM.li({
+                        className: (this.props.selected.key==i) ? "selected" : "",
+                        onClick: this.props.clickHandler.bind(null, item),
+                        children: item.label
+                    });
+                }.bind(this))
+            })
+        }
+    }),
+    getInitialState: function() {
+        return {
+            selectedPage: {label: 1, key: 0}
+        };
+    },
+    componentDidMount: function() {
+      $.ajax({
+          url: this.props.url,
+          dataType: "json",
+          success: function(struct) {
+              struct.nPages=Math.ceil(struct.rows.length/this.props.nRows);
+              this.setState(struct);
+          }.bind(this)
       });
-      var start = new Date().getTime();
-      setInterval(function() {
-        React.renderComponent(
-          <ExampleApplication elapsed={new Date().getTime() - start} />,
-          document.getElementById('dynatable')
-        );
-      }, 50);
+    },   
+    handlePaginatorClicked: function(item) {
+        this.setState({selectedPage: item});
+        console.log("Page "+item.label);
+    },
+    filterSelectedRows: function(rows, selectedPage) {
+        var n=this.props.nRows;
+        var i=selectedPage.key;
+        return rows.slice(i*n, (i+1)*n);
+    },
+    render: function() {
+        return React.DOM.div({
+            children: [
+                (this.state.cols && this.state.rows && this.state.selectedPage) ? this.Table({
+                    cols: this.state.cols,
+                    rows: this.filterSelectedRows(this.state.rows, 
+                                                  this.state.selectedPage)
+                }) : undefined,
+                this.state.nPages ? this.Paginator({
+                    nPages: this.state.nPages,
+                    clickHandler: this.handlePaginatorClicked,
+                    selected: this.state.selectedPage
+                }) : undefined
+            ]                         
+        });
+    }
+});
+
+var Url="http://localhost:3000/members/2";
+
+React.renderComponent(DynamicTable({url: Url, nRows: 25}), $("#dynatable")[0]);
 </script>
 {% endblock %}

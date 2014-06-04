@@ -49,9 +49,8 @@
        (layout/render
         "members.html" {:result result})))
   ([member-id]
-      (let [result (meetup/member member-id) ]
-        (layout/render
-         "member.html" {:result result}))))
+     (layout/render
+      "member.html" {})))
 
 (defn groups-page
   ([]
@@ -85,10 +84,25 @@
 (defn about-page []
   (layout/render "about.html"))
 
+(defn as-rows-cols [members]
+  {:rows (map (fn [row] {:name (->> row :profile :data :name)
+                        :rsvp-yes (->> row :rsvps)
+                        :join-date (->> row :profile :data :joined)
+                        :most-recent (->> row :recent :event :data :name)
+                        :event-date (->> row :recent :event :data :time)}) members)
+   :cols [ { :type "str" :key "name" :label "Name"}
+           { :type "timestamp" :key "join-date" :label "Join Date" }
+           { :type "int" :key "rsvp-yes" :label "RSVP'd yes"}           
+           { :type "str" :key "most-recent" :label "Most Recent Event"}
+           { :type "timestamp" :key "event-date" :label "Event Date"}] 
+   }
+  )
+
 (defroutes home-routes
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
   (GET "/members" [] (members-page))
+  (GET "/members/2" [] {:body (as-rows-cols (meetup/all-members))})
   (GET "/groups" [] (groups-page))
   (GET "/groups/overlap" []  {:body  (meetup/group-overlap)})
   (GET "/groups/overlap/venn" request

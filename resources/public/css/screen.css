@@ -24,6 +24,27 @@ ul li.tag {float:none;}
 ul li.tag:before { content: ""; padding: 0 .1em 0 0.5em; }
 ul li.tab:before { content: ""; padding: 0 .1em 0 0.5em; }
 
+ul.paginator {
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+ul.paginator li {
+  float: left;
+  list-style: none;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  padding-top: 10px;
+  border: 1px solid #AAAAAA;
+  margin-right: 5px;
+}
+
+ul.paginator li.selected {
+  background-color: #32CD32;
+  color: #000000;
+}
+
 .cloud a.tag1 { font-size: 0.7em; font-weight: 100; }
 .cloud a.tag2 { font-size: 0.8em; font-weight: 200; }
 .cloud a.tag3 { font-size: 0.9em; font-weight: 300; }
