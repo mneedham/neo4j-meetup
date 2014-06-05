@@ -45,12 +45,12 @@
 
 (defn members-page
   ([]
-     (let [result (meetup/all-members)]
-       (layout/render
-        "members.html" {:result result})))
-  ([member-id]
      (layout/render
-      "member.html" {})))
+      "members.html" {}))
+  ([member-id]
+     (let [result (meetup/member member-id)]
+       (layout/render
+        "member.html" {:result result}))))
 
 (defn groups-page
   ([]
@@ -86,6 +86,7 @@
 
 (defn as-rows-cols [members]
   {:rows (map (fn [row] {:name (->> row :profile :data :name)
+                        :id (->> row :profile :data :id)
                         :rsvp-yes (->> row :rsvps)
                         :join-date (->> row :profile :data :joined)
                         :most-recent (->> row :recent :event :data :name)

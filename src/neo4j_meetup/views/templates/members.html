@@ -5,15 +5,15 @@
     
     <div id="dynatable"></div>
 
-</div>
-
-
-    </div>
   </div>
 {% endblock %}
 
 {% block javascript %}
 <script type="text/jsx">
+      /**
+       * @jsx React.DOM
+       */
+
 var DynamicTable=React.createClass({
     Table: React.createClass({
         formatters: {
@@ -41,9 +41,12 @@ var DynamicTable=React.createClass({
                                 className: (0==i%2) ? "even" : "odd",
                                 children: this.props.cols.map(function(item) {
                                     var formatter=this.formatters[item.type];
-                                    return React.DOM.td({
-                                        children: formatter(row[item.key])
-                                    });
+                                    if(item.key == "name") {
+                                      var link = "/members/" + row.id;
+                                      return <td><a href={link}>{formatter(row[item.key])}</a></td>;
+                                    } else {
+                                      return <td>{formatter(row[item.key])}</td>;
+                                    }
                                 }.bind(this))
                             });
                         }.bind(this))
