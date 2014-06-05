@@ -11,7 +11,7 @@
 {% block javascript %}
 <script type="text/jsx">
       /**
-       * @jsx React.DOM
+      * @jsx React.DOM
        */
 
 var DynamicTable=React.createClass({
@@ -31,24 +31,23 @@ var DynamicTable=React.createClass({
                     React.DOM.thead({
                         children: React.DOM.tr({
                             children: this.props.cols.map(function(col) {
-                                return React.DOM.th({children: col.label});
+                                return <th>{col.label}</th>;
                             }.bind(this))
                         })
                     }),
                     React.DOM.tbody({
                         children: this.props.rows.map(function(row, i) {           
-                            return React.DOM.tr({
-                                className: (0==i%2) ? "even" : "odd",
-                                children: this.props.cols.map(function(item) {
-                                    var formatter=this.formatters[item.type];
-                                    if(item.key == "name") {
-                                      var link = "/members/" + row.id;
-                                      return <td><a href={link}>{formatter(row[item.key])}</a></td>;
-                                    } else {
-                                      return <td>{formatter(row[item.key])}</td>;
-                                    }
-                                }.bind(this))
-                            });
+                            var className = (0==i%2) ? "even" : "odd"; 
+                            var children = this.props.cols.map(function(item) {
+                                var formatter=this.formatters[item.type];
+                                if(item.key == "name") {
+                                    var link = "/members/" + row.id;
+                                    return <td><a href={link}>{formatter(row[item.key])}</a></td>;
+                                } else {
+                                    return <td>{formatter(row[item.key])}</td>;
+                                }
+                            }.bind(this));
+                            return <tr className={className}>{children}</tr>;
                         }.bind(this))
                     })
                 ]
@@ -61,20 +60,14 @@ var DynamicTable=React.createClass({
             return Array.apply(null, Array(n)).map(function (_, i) {return i;});
         },
         render: function() {
-            return React.DOM.ul({
-                className: "paginator",
-                children: this.range(this.props.nPages).map(function(i) {
-                    var item={
-                        label: i+1,
-                        key: i
-                    };
-                    return React.DOM.li({
-                        className: (this.props.selected.key==i) ? "selected" : "",
-                        onClick: this.props.clickHandler.bind(null, item),
-                        children: item.label
-                    });
+            var rows = this.range(this.props.nPages).map(function(i) {
+                var item={ label: i+1, key: i };
+                var className = (this.props.selected.key==i) ? "selected" : "";
+                return <li className={className} onClick={this.props.clickHandler.bind(null,item)}>
+                           {item.label}
+                       </li>;
                 }.bind(this))
-            })
+            return <ul className="paginator">{rows}</ul>;
         }
     }),
     getInitialState: function() {
@@ -102,8 +95,7 @@ var DynamicTable=React.createClass({
         return rows.slice(i*n, (i+1)*n);
     },
     render: function() {
-        return React.DOM.div({
-            children: [
+        var children = [
                 (this.state.cols && this.state.rows && this.state.selectedPage) ? this.Table({
                     cols: this.state.cols,
                     rows: this.filterSelectedRows(this.state.rows, 
@@ -114,8 +106,8 @@ var DynamicTable=React.createClass({
                     clickHandler: this.handlePaginatorClicked,
                     selected: this.state.selectedPage
                 }) : undefined
-            ]                         
-        });
+            ];
+        return <div>{children}</div>;
     }
 });
 
