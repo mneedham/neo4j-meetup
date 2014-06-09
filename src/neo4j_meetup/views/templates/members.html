@@ -28,13 +28,11 @@ var DynamicTable=React.createClass({
         render: function() {
             return React.DOM.table({ className: "table",
                 children: [
-                    React.DOM.thead({
-                        children: React.DOM.tr({
-                            children: this.props.cols.map(function(col) {
-                                return <th>{col.label}</th>;
-                            }.bind(this))
-                        })
-                    }),
+                    <thead>
+                      <tr>
+                        {this.props.cols.map(function(col) { return <th>{col.label}</th>;}.bind(this))}
+                      </tr>
+                    </thead>,
                     React.DOM.tbody({
                         children: this.props.rows.map(function(row, i) {           
                             var className = (0==i%2) ? "even" : "odd"; 
@@ -111,7 +109,7 @@ var DynamicTable=React.createClass({
     }
 });
 
-var Url="http://localhost:3000/members/2";
+var Url="http://localhost:3000/api/members";
 
 React.renderComponent(DynamicTable({url: Url, nRows: 25}), $("#dynatable")[0]);
 </script>

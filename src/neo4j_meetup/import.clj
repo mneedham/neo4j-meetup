@@ -178,6 +178,7 @@
                          :utc_offset (:utc_offset event)}}))
 
 (defn create-group [group]
+  (println (str "creating " group))
   (tx/statement "MERGE (g:Group {id: {group}.id})
                  SET g = {group}
                  WITH g

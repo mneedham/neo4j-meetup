@@ -7,6 +7,8 @@
             [taoensso.timbre :as timbre]
             [taoensso.timbre.appenders.rotor :as rotor]
             [selmer.parser :as parser]
+            [ring.middleware.format-response :as mwfr]
+            [ring.middleware.format-params :as mwfp]            
             [environ.core :refer [env]]))
 
 (defroutes app-routes
@@ -47,7 +49,9 @@
            [home-routes app-routes]
            ;; add custom middleware here
            :middleware [middleware/template-error-page
-                        middleware/log-request]
+                        middleware/log-request
+                        mwfp/wrap-restful-params
+                        mwfr/wrap-restful-response]
            ;; add access rules here
            :access-rules []
            ;; serialize/deserialize the following data formats

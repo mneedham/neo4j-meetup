@@ -59,7 +59,7 @@
      (db/cypher query params)
      )))
 
-(defn group-topics [group-id]
+(defn group-member-topics [group-id]
   (let [query "                
                 MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})
 
@@ -84,9 +84,26 @@
 
 "
         params {:groupId (read-string group-id)}]
-    (->>
-     (db/cypher query params)
-     )))
+    (->> (db/cypher query params))))
+
+(defn topic-suggestions [group-id]
+  (let [query "
+
+               MATCH (topic:Topic), (group:Group {id: {groupId}})
+
+               OPTIONAL MATCH (topic)<-[:INTERESTED_IN]-()
+               WHERE NOT (group)-[:HAS_TOPIC]->(topic)
+
+               WITH topic, COUNT(*) AS interested
+               OPTIONAL MATCH path = (topic)<-[:HAS_TOPIC]-()
+
+               RETURN topic, interested, COUNT(path) AS otherGroups
+               ORDER BY interested DESC
+               LIMIT 50
+
+"
+        params {:groupId (read-string group-id)}]
+    (->> (db/cypher query params))))
 
 (defn topic-overlap [topic-id]
   (let [query "

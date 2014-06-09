@@ -5,7 +5,8 @@
 
 <ul class="nav nav-tabs">
   <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
-  <li class="tab"><a href="#topics" data-toggle="tab">Topics</a></li>
+  <li class="tab"><a href="#recommendations" data-toggle="tab">Topic Recommendations</a></li>
+  <li class="tab"><a href="#topics" data-toggle="tab">Members' Topics</a></li>
   <li class="tab"><a href="#otherGroups" data-toggle="tab">Other Groups</a></li>
 </ul>
 
@@ -31,6 +32,27 @@
     </div>
   </div>
 
+  <div class="tab-pane" id="recommendations">
+     <table class="table">
+       <thead>
+         <th>Topic</th>
+         <th>Members</th>
+         <th>Other Groups</th>
+       </thead>
+       <tbody>
+           {% for row in topics %}
+           <tr>
+            <td width="80%">
+              <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
+            </td>
+            <td>{{row.interested}}</td>
+            <td>{{row.otherGroups}}</td>
+           </tr>
+     {% endfor %}
+      </tbody>
+     </table>
+  </div>
+
   <div class="tab-pane" id="topics">
      <table class="table">
        <thead>
@@ -40,7 +62,7 @@
          <th></th>
        </thead>
        <tbody>
-           {% for row in topics %}
+           {% for row in member-topics %}
            <tr>
             <td width="80%">
               <a href="/topics/{{row.topic.data.id}}">{{row.topic.data.name}}</a>
@@ -53,6 +75,7 @@
       </tbody>
      </table>
   </div>
+
 
   <div class="tab-pane" id="otherGroups">
      <table class="table">

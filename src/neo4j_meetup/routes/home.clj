@@ -3,6 +3,8 @@
   (:use selmer.filters)
   (:require [clj-time.format :as f])
   (:require [clj-time.coerce :as c])
+  (:require [compojure.route :as route])
+  (:require [ring.util.response :refer [resource-response response]])
   (:require [neo4j-meetup.views.layout :as layout]
             [neo4j-meetup.util :as util]
             [neo4j-meetup.core :as core]
@@ -59,10 +61,14 @@
          "groups.html" {:result result})))
   ([group-id]
      (let [result (meetup/group group-id)
-           topics (meetup/group-topics group-id)
+           member-topics (meetup/group-member-topics group-id)
+           topics (meetup/topic-suggestions group-id)
            other-groups (meetup/other-groups group-id)]
        (layout/render
-     "group.html" {:result result :topics topics :otherGroups other-groups}))))
+        "group.html" {:result result
+                      :topics topics
+                      :member-topics member-topics
+                      :otherGroups other-groups}))))
 
 (defn topics-page
   ([]
@@ -103,7 +109,7 @@
   (GET "/" [] (home-page))
   (GET "/events/:id" [id] (events-page id))
   (GET "/members" [] (members-page))
-  (GET "/members/2" [] {:body (as-rows-cols (meetup/all-members))})
+  (GET "/api/members" [] {:body (as-rows-cols (meetup/all-members))})
   (GET "/groups" [] (groups-page))
   (GET "/groups/overlap" []  {:body  (meetup/group-overlap)})
   (GET "/groups/overlap/venn" request
@@ -114,4 +120,5 @@
   (GET "/topics" [] (topics-page))      
   (GET "/members/:id" [id] (members-page id))
   (GET "/venues/:id" [id] (venues-page id))
-  (GET "/about" [] (about-page)))
+  (GET "/about" [] (about-page))
+  (GET "/foo" [] (response  {:foo "bar"})))
