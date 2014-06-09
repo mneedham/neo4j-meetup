@@ -24,18 +24,15 @@ ul li.tag {float:none;}
 ul li.tag:before { content: ""; padding: 0 .1em 0 0.5em; }
 ul li.tab:before { content: ""; padding: 0 .1em 0 0.5em; }
 
-ul.paginator {
-  height: 60px;
-  margin-bottom: 20px;
-}
+
+ul.li.paginator:before {content: " "; padding: 0 0 0 0; }
 
 ul.paginator li {
   float: left;
   list-style: none;
-  width: 30px;
+  min-width: 30px;
   height: 30px;
   text-align: center;
-  padding-top: 10px;
   border: 1px solid #AAAAAA;
   margin-right: 5px;
 }
@@ -95,4 +92,23 @@ td.center
 td.right
 {
     background-color: #5E9ECB;
+}
+
+.pagination { text-align: center; margin: 20px 0; word-spacing: -1em; }
+.pagination li { display: inline-block; list-style: none; font: bold 12px/13px Arial, Helvetica, sans-serif; padding: 5px 9px; color: #999; background: #eee; word-spacing: normal; margin: 0 1px; }
+.pagination li.first { margin-right: 10px; }
+.pagination li.last { margin-left: 10px; }
+.pagination li.current { background: #66CC00; color: #fff; }
+.pagination li a { display: inline-block; padding: 5px 9px; margin: -5px -9px; text-decoration: none;}
+.pagination li a,
+.pagination li a:link,
+.pagination li a:visited,
+.pagination li a:active { background: #666; color: #fff; }
+.pagination li a:hover,
+.pagination li a:focus { background: #333; }
+.pagination li,
+.pagination li a {
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+border-radius: 5px;
 }

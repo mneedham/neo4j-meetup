@@ -67,7 +67,20 @@ var DynamicTable=React.createClass({
                            {item.label}
                        </li>;
                 }.bind(this))
-            return <ul className="paginator">{rows}</ul>;
+
+            var current = {label: this.props.selected.key + 1, key: this.props.selected.key};
+            var previous = {label: current.label == 1 ? current.label : current.label-1, 
+                            key:   current.key   == 0 ? current.key : current.key-1 };
+            var next = {label: current.label == this.props.nPages ? current.label : current.label+1, 
+                        key:   current.key   == this.props.nPages-1 ? current.key : current.key+1 };
+
+            rows = [];
+            rows.push(<li className="first" onClick={this.props.clickHandler.bind(null,{label:1,key:0})}>First</li>);
+            rows.push(<li className="prev" onClick={this.props.clickHandler.bind(null,{label:previous.label,key:previous.key})}>Prev</li>);
+            rows.push(<li className="current" onClick={this.props.clickHandler.bind(null,{label:current.label,key:current.key})}>{current.label}</li>);
+            rows.push(<li className="next" onClick={this.props.clickHandler.bind(null,{label:next.label,key:next.key})}>Next</li>)
+            rows.push(<li className="last" onClick={this.props.clickHandler.bind(null,{label:this.props.nPages,key:this.props.nPages-1})}>Last</li>);
+            return <ul className="pagination">{rows}</ul>;
         }
     }),
     getInitialState: function() {
@@ -96,6 +109,12 @@ var DynamicTable=React.createClass({
     },
     render: function() {
         var children = [
+                this.state.nPages ? this.Paginator({
+                    nPages: this.state.nPages,
+                    clickHandler: this.handlePaginatorClicked,
+                    selected: this.state.selectedPage
+                }) : undefined,
+
                 (this.state.cols && this.state.rows && this.state.selectedPage) ? this.Table({
                     cols: this.state.cols,
                     rows: this.filterSelectedRows(this.state.rows, 
