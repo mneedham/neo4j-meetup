@@ -4,6 +4,19 @@ This is a Clojure library + app for analysing meetup data.
 
 ## Usage
 
+Put your meetup key into ~/.lein/profiles.clj 
+
+````
+{
+  :user {
+      :plugins [[lein-environ "0.4.0"]]
+      :env { :meetup-key "XXXXXXX" }
+  }
+
+}
+````
+
+
 Create a directory for the data:
 
 ````
