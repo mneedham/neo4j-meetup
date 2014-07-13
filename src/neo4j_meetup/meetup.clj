@@ -159,7 +159,6 @@
                       venue,
                       LENGTH(a) + REDUCE(acc=0, count IN [value IN a | value.rsvp.guests] | acc + count) as attendees,
                       LENGTH(d) + REDUCE(acc=0, count IN [value IN d | value.rsvp.guests] | acc + count) as dropouts
-
                       "]
     (->>
      (db/cypher query)
@@ -169,24 +168,18 @@
 (defn event [event-id]
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
-               OPTIONAL MATCH (person)-[:INTERESTED_IN]->(topic)
-               WHERE ()-[:HAS_TOPIC]->(topic)
-               WITH event, venue, rsvp, person, COLLECT(topic) as topics
+               WITH event, venue, rsvp, person
                ORDER BY rsvp.time
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
                WITH event,
                     venue, 
-                    COLLECT({rsvp: rsvp, initial: initial, person: person, topics: topics}) AS responses
+                    COLLECT({rsvp: rsvp, initial: initial, person: person}) AS responses
                WITH event,
                     venue,
                     [response in responses WHERE response.initial is null
                                            AND response.rsvp.response = 'yes'] as attendees,
-                    [response in responses WHERE not response.initial is null] as dropouts,
-                    responses
-               UNWIND([response in attendees | response.topics]) AS topics
-               UNWIND(topics) AS topic
-               WITH event, venue, attendees, dropouts, {id: topic.id, name:topic.name, freq:COUNT(*)} AS t
-               RETURN event, venue, attendees, dropouts, COLLECT(t) AS topics
+                    [response in responses WHERE not response.initial is null] as dropouts
+               RETURN event, venue, attendees, dropouts
 "
         params {:eventId event-id}]
     (->>
@@ -194,6 +187,17 @@
      (map #(merge %  (extract-date-time
                       (+ (-> % :event :data :time) (-> % :event :data :utc_offset)))))
      first)))
+
+(defn event-topics [event-id]
+  (let [query "MATCH (event:Event {id: {eventId}})
+               MATCH (event)<-[:TO]-(rsvp {response: 'yes'})<-[:RSVPD]-(person)
+               MATCH (person)-[:INTERESTED_IN]->(topic)
+               WHERE ()-[:HAS_TOPIC]->(topic)
+               RETURN topic.id AS id, topic.name AS name, COUNT(*) AS freq"
+        params {:eventId event-id}]
+    (->>
+     (db/cypher query params)
+)))
 
 (defn all-groups []
   (let [ query "

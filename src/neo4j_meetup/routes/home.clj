@@ -28,6 +28,11 @@
      "home.html" {:past (sort-by time-descending past)
                   :upcoming (sort-by time-ascending upcoming)})))
 
+
+(comment (->> (db/cypher unsorted-query)
+              (map #(->> % :e :data))
+              (group-by #(> (->> % :timestamp) now))))
+
 (add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
 (add-filter! :guestify #(if (= % 0) "-" %))
 
@@ -41,9 +46,11 @@
 (add-filter! :tag-size choose-tag-size)
 
 (defn events-page [event-id]
-  (let [result (meetup/event event-id) ]
+  (let [result (meetup/event event-id)
+        topics (meetup/event-topics event-id)]
    (layout/render
-    "events.html" {:result result})))
+    "events.html" {:result result
+                   :topics topics})))
 
 (defn members-page
   ([]

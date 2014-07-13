@@ -61,7 +61,7 @@ var DynamicTable=React.createClass({
         },
         render: function() {
             var rows = this.range(this.props.nPages).map(function(i) {
-                var item={ label: i+1, key: i };
+                var item = { label: i+1, key: i };
                 var className = (this.props.selected.key==i) ? "selected" : "";
                 return <li className={className} onClick={this.props.clickHandler.bind(null,item)}>
                            {item.label}

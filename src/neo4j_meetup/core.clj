@@ -96,6 +96,14 @@
 (defn save [file data]
   (clojure.core/spit file (json/write-str data)))
 
+(comment (def query-keys [:orderedPastEvents :orderedFutureEvents]))
+(comment (def query-result (->> ( db/cypher sorted-query) first)))
+
+(comment (->> query-keys
+              (mapcat (fn [key]
+                        [key (map #(% :data) (get query-result key))]))
+              (apply  array-map)))
+
 (defn load-json [file]
   (json/read-str (slurp file) :key-fn keyword))
 

@@ -43,7 +43,7 @@
 
 <div>
    <ul class="cloud">
-     {% for topic in result.topics %}
+     {% for topic in topics %}
        <li class="tag"> 
          <a class="tag{{topic.freq|tag-size}}" href="/topics/{{topic.id}}">{{ topic.name }}</a>
          <sup>{{topic.freq}}</sup>

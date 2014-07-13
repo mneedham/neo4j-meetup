@@ -319,3 +319,74 @@ OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembershi
 RETURN group1.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
 ORDER BY count DESC
 LIMIT 20
+
+// create relationship between adjacent memberships
+MATCH (membership:Membership)<-[:HAS_MEMBERSHIP]-(meetupProfile)
+
+WITH meetupProfile, membership
+ORDER BY id(meetupProfile), membership.joined
+
+WITH meetupProfile, COLLECT(membership) AS memberships
+
+UNWIND reduce(acc=[], x in range(1,length(memberships) -1) | acc+ { one: memberships[x-1], two: memberships[x]}) AS pair 
+WITH pair.one AS p1, pair.two AS p2
+CREATE (p1)-[:NEXT]->(p2)
+
+// what groups do people join consecutively
+
+MATCH (group1:Group {name: "Neo4j - London User Group"}), (group2:Group)
+OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembership)-[:OF_GROUP]->(group2)
+RETURN group1.name, group2.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+LIMIT 20
+
+// people joining neo first
+
+MATCH (group1:Group {name: "Neo4j - London User Group"}), (group2:Group)
+OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)
+OPTIONAL MATCH shortestpath((membership)-[:NEXT*..5]->(nextMembership))
+OPTIONAL MATCH (nextMembership)-[:OF_GROUP]->(group2)
+RETURN group2.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+LIMIT 20
+
+// people joining neo second
+
+MATCH (group1:Group), (group2:Group {name: "Neo4j - London User Group"})
+OPTIONAL MATCH path = (group1)<-[:OF_GROUP]-(membership)-[:NEXT]->(nextMembership)-[:OF_GROUP]->(group2)
+RETURN group1.name, COUNT(path) AS count, AVG(nextMembership.joined - membership.joined) / 1000 / 60 / 60 / 24 AS timeDiff
+ORDER BY count DESC
+
+// 
+
+MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}}),
+      (m)-[:INTERESTED_IN]-(topic)
+RETURN topic, COUNT(*) as count
+ORDER BY count DESC
+LIMIT 50
+
+
+// 
+
+MATCH (g:Group)
+WHERE g.id IN {ids}
+
+WITH COLLECT(g) AS groups
+UNWIND groups AS g1
+UNWIND groups AS g2
+
+WITH g1, g2 WHERE g1 <> g2
+
+OPTIONAL MATCH path = (g1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(g2) WHERE id(g1) < id(g2)
+
+WITH g1, g2, COUNT(path) AS overlap
+ORDER BY id(g1)
+
+
+WITH g1, [o IN COLLECT({group: g2.name, overlap: overlap }) WHERE o.overlap > 0] AS others
+
+MATCH (g1)<-[:MEMBER_OF]-()
+
+RETURN g1.name, id(g1), COUNT(*) AS members, others 
+ORDER BY id(g1)
+
