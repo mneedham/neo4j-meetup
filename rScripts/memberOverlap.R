@@ -71,7 +71,7 @@ ggplot(group_overlap, aes(x=group1.name, y=group2.name, fill=percentage)) +
 query = "match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group {name: \"Neo4j - London User Group\"})
 RETURN membership.joined AS joinDate"
 
-timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01")
+timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
 
 meetupMembers = cypher(graph, query)
 meetupMembers$joined <- timestampToDate(meetupMembers$joinDate)
@@ -262,6 +262,111 @@ ddply(ddply(meetupMembers, .(dayOfWeek=format(joined, "%A")), function(x) {
 
 query = "MATCH (e:Event {id: {eventId}}) 
          RETURN e.name, e.time + e.utc_offset AS eventTime"
-rsvps = cypher(graph, query, eventId = "187178902")
+events = cypher(graph, query, eventId = "187178902")
 
-rsvps$date = timestampToDate(rsvps$eventTime)
+events$eventTime = timestampToDate(events$eventTime)
+
+query = "MATCH (e:Event {id: {eventId}})<-[:TO]-(response {response: 'yes'})
+         RETURN response.time AS time, e.time + e.utc_offset AS eventTime"
+yesRSVPs = cypher(graph, query, eventId = "187178902")
+yesRSVPs$time = timestampToDate(yesRSVPs$time)
+yesRSVPs$eventTime = timestampToDate(yesRSVPs$eventTime)
+
+yesRSVPs$difference = yesRSVPs$eventTime - yesRSVPs$time
+yesRSVPs$difference = as.numeric(yesRSVPs$eventTime - yesRSVPs$time, units="days")
+
+ggplot(yesRSVPs, aes(x=difference)) + geom_histogram(binwidth=1, colour="grey", fill="green")
+
+#ggplot(yesRSVPs, aes(x=difference)) + geom_histogram(binwidth=.5)
+
+query = "MATCH (e:Event)<-[:TO]-(response {response: 'yes'})
+         RETURN response.time AS time, e.time + e.utc_offset AS eventTime"
+allYesRSVPs = cypher(graph, query)
+allYesRSVPs$time = timestampToDate(allYesRSVPs$time)
+allYesRSVPs$eventTime = timestampToDate(allYesRSVPs$eventTime)
+allYesRSVPs$difference = as.numeric(allYesRSVPs$eventTime - allYesRSVPs$time, units="days")
+allYesRSVPs$answer = "yes"
+
+yes = ggplot(allYesRSVPs, aes(x=difference)) + 
+  geom_histogram(binwidth=1, colour="grey", fill="green")
+
+# When did people initially sign up
+query = "MATCH (e:Event)<-[:TO]-({response: 'no'})<-[:NEXT]-(response)
+         RETURN response.time AS time, e.time + e.utc_offset AS eventTime"
+allNoRSVPs = cypher(graph, query)
+allNoRSVPs$time = timestampToDate(allNoRSVPs$time)
+allNoRSVPs$eventTime = timestampToDate(allNoRSVPs$eventTime)
+allNoRSVPs$difference = as.numeric(allNoRSVPs$eventTime - allNoRSVPs$time, units="days")
+allNoRSVPs$answer = "no"
+
+# When did people drop out
+query = "MATCH (e:Event)<-[:TO]-(response {response: 'no'})<-[:NEXT]-()
+         RETURN response.time AS time, e.time + e.utc_offset AS eventTime"
+allNoRSVPs = cypher(graph, query)
+allNoRSVPs$time = timestampToDate(allNoRSVPs$time)
+allNoRSVPs$eventTime = timestampToDate(allNoRSVPs$eventTime)
+allNoRSVPs$difference = as.numeric(allNoRSVPs$eventTime - allNoRSVPs$time, units="days")
+allNoRSVPs$answer = "no"
+
+no = ggplot(allNoRSVPs, aes(x=difference)) + 
+  geom_histogram(binwidth=1, colour="grey", fill="red") +
+  scale_y_reverse()
+
+allRSVPs = rbind(allNoRSVPs, allYesRSVPs)
+
+ggplot(allRSVPs, aes(x = difference)) + 
+  geom_bar() +
+  facet_wrap(~ answer)
+
+library(gridExtra)
+grid.arrange(yes,no,ncol=1,widths=c(1,1))
+
+
+distance <- function(time1, time2)  {
+  sapply(time1, function(x) {
+    if((time2 - x) <= 2) {
+      "within 2 days"
+    } else if((time2 -x ) <= 7) {
+      "within a week"
+    } else if((time2 -x ) <= 10) {
+      "within 10 days"
+    } else {
+      "more than 10 days ago"
+    }
+  })  
+}
+
+distance2 <- function(time1, time2)  {
+  mapply(function(t1, t2) {
+    if((t2 - t1) <= 2) {
+      "within 2 days"
+    } else if((t2 - t1 ) <= 7) {
+      "within a week"
+    } else if((t2 -t1 ) <= 10) {
+      "within 10 days"
+    } else {
+      "more than 10 days ago"
+    }
+  }, time1, time2)
+} 
+
+ddply(yesRSVPs, .(distance=distance(time, events$eventTime[1])), summarise, count=length(time))
+
+ddply(allYesRSVPs, .(distance=distance2(time, eventTime)), summarise, count=length(time))
+
+summarisedDifference <- function(one, two) {
+  mapply(function(x, y) { 
+    if((x-y) >= 5) {
+      "5 or more"
+    } else if((x-y) >= 3) {
+      "3 to 5"
+    } else {
+      "less than 5"
+    }    
+  }, one, two)
+}
+
+df = data.frame(x=c(10,9,8,7,6,5,4,3,2,1), y=c(5,4,3,4,3,2,2,1,2,1))
+ddply(df, .(difference=summarisedDifference(x,y)), summarise, count=length(x))
+
+
