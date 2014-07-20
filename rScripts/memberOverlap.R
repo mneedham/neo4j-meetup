@@ -284,11 +284,14 @@ query = "MATCH (e:Event)<-[:TO]-(response {response: 'yes'})
 allYesRSVPs = cypher(graph, query)
 allYesRSVPs$time = timestampToDate(allYesRSVPs$time)
 allYesRSVPs$eventTime = timestampToDate(allYesRSVPs$eventTime)
+
+allYesRSVPs$difference = allYesRSVPs$eventTime - allYesRSVPs$time
 allYesRSVPs$difference = as.numeric(allYesRSVPs$eventTime - allYesRSVPs$time, units="days")
+
 allYesRSVPs$answer = "yes"
 
 yes = ggplot(allYesRSVPs, aes(x=difference)) + 
-  geom_histogram(binwidth=1, colour="grey", fill="green") +
+  geom_histogram(binwidth=1, fill="green") +
   xlim(0,120) + 
   ylim(0, 400)
 
