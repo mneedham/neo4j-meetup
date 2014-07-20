@@ -288,7 +288,9 @@ allYesRSVPs$difference = as.numeric(allYesRSVPs$eventTime - allYesRSVPs$time, un
 allYesRSVPs$answer = "yes"
 
 yes = ggplot(allYesRSVPs, aes(x=difference)) + 
-  geom_histogram(binwidth=1, colour="grey", fill="green")
+  geom_histogram(binwidth=1, colour="grey", fill="green") +
+  xlim(0,120) + 
+  ylim(0, 400)
 
 # When did people initially sign up
 query = "MATCH (e:Event)<-[:TO]-({response: 'no'})<-[:NEXT]-(response)
@@ -308,18 +310,29 @@ allNoRSVPs$eventTime = timestampToDate(allNoRSVPs$eventTime)
 allNoRSVPs$difference = as.numeric(allNoRSVPs$eventTime - allNoRSVPs$time, units="days")
 allNoRSVPs$answer = "no"
 
-no = ggplot(allNoRSVPs, aes(x=difference)) + 
-  geom_histogram(binwidth=1, colour="grey", fill="red") +
-  scale_y_reverse()
+no = ggplot(allNoRSVPs, aes(x=difference)) +
+  geom_histogram(binwidth=1, fill="red") +
+  xlim(0,120) + ylim(0, 400) + scale_y_reverse()
 
 allRSVPs = rbind(allNoRSVPs, allYesRSVPs)
 
-ggplot(allRSVPs, aes(x = difference)) + 
-  geom_bar() +
-  facet_wrap(~ answer)
-
+ggplot(allRSVPs, aes(x = difference, fill=answer)) + 
+  scale_fill_manual(values=c("#FF0000", "#00FF00")) + 
+  geom_bar(binwidth=1) +
+  facet_wrap(~ answer, nrow=2, ncol=1)
+  
+  
 library(gridExtra)
 grid.arrange(yes,no,ncol=1,widths=c(1,1))
+
+# attempt 2 
+
+allRSVPs = rbind(allNoRSVPs, allYesRSVPs)
+
+ggplot(allRSVPs, aes(x=difference, fill=answer)) + 
+  geom_bar(binwidth=1) +
+  geom_bar(position="fill") +
+  geom_bar(position="dodge")
 
 
 distance <- function(time1, time2)  {
