@@ -2,6 +2,8 @@ library(RNeo4j)
 library(ggplot2)
 library(gridExtra)
 
+timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
+
 query = "MATCH (e:Event)<-[:TO]-(response {response: 'yes'})
          RETURN response.time AS time, e.time + e.utc_offset AS eventTime"
 allYesRSVPs = cypher(graph, query)
