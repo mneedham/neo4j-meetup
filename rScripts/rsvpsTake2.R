@@ -8,13 +8,13 @@ query = "MATCH (e:Event)<-[:TO]-(response {response: 'yes'})
          MATCH (e)<-[:TO]-(response {response: 'no'})<-[:NEXT]-()
          WITH e, COLLECT(response) + yeses AS responses
          UNWIND responses AS response
-         RETURN response.time AS time, e.time + e.utc_offset AS eventTime, response.response AS response"
+         RETURN e.name AS event, response.time AS time, e.time + e.utc_offset AS eventTime, response.response AS response"
 
 allRSVPs = cypher(graph, query)
 allRSVPs$time = timestampToDate(allRSVPs$time)
 allRSVPs$eventTime = timestampToDate(allRSVPs$eventTime)
 allRSVPs$difference = as.numeric(allRSVPs$eventTime - allRSVPs$time, units="days")
-allRSVPs$eventTime = format(allRSVPs$eventTime, "%A")
+allRSVPs$dayOfWeek = format(allRSVPs$eventTime, "%A")
 
 ggplot(allRSVPs, aes(x = difference, fill=response)) + 
   geom_bar(binwidth=1) + 
@@ -28,4 +28,4 @@ ggplot(allRSVPs, aes(x = difference, fill=response)) +
 ggplot(allRSVPs, aes(x = difference, fill=response)) + 
   scale_fill_manual(values=c("#FF0000", "#00FF00")) + 
   geom_bar(binwidth=1) +
-  facet_wrap(~ response + dayOfWeek, as.table = FALSE)
+  facet_wrap(~ event, as.table = FALSE)

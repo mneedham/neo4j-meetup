@@ -175,6 +175,7 @@
                          :name (:name event)
                          :description (:description event)
                          :time (:time event)
+                         :announced_at (:announced_at event)
                          :utc_offset (:utc_offset event)}}))
 
 (defn create-group [group]

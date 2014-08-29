@@ -20,7 +20,9 @@
                  [clojure-opennlp "0.3.2"]
                  [org.clojure/data.csv "0.1.2"]
                  [environ "0.4.0"]
-                 [ring-middleware-format "0.3.2"]]
+                 [ring-middleware-format "0.3.2"]
+                 ]
+  :repositories {"mandubian-mvn" "http://mandubian-mvn.googlecode.com/svn/trunk/mandubian-mvn/repository"}
   :plugins [[lein-ring "0.8.10"]
             [lein-environ "0.4.0"]]
   :ring {:handler neo4j-meetup.handler/app

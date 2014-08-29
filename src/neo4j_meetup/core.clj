@@ -49,6 +49,7 @@
         (str "https://api.meetup.com/2/events?page=" perpage
              "&offset=" offset
              "&orderby=" orderby
+             "&fields=announced_at"
              "&status=upcoming,past&"
              "&group_urlname=" MEETUP_NAME
              "&key=" MEETUP_KEY)

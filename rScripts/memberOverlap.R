@@ -4,7 +4,7 @@ install.packages("ggplot2")
 install.packages("seriation")
 install.packages('plyr')
 
-library(Rneo4j)
+library(RNeo4j)
 library(ggplot2)
 library(seriation)
 library(plyr)
@@ -69,13 +69,21 @@ ggplot(group_overlap, aes(x=group1.name, y=group2.name, fill=percentage)) +
         axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
 query = "match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group {name: \"Neo4j - London User Group\"})
-RETURN membership.joined AS joinDate"
+RETURN membership.joined AS joinTimestamp"
 
 timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
 
 meetupMembers = cypher(graph, query)
-meetupMembers$joined <- timestampToDate(meetupMembers$joinDate)
-meetupMembers$monthYear <- format(meetupMembers$joined, "%m-%Y")
+meetupMembers$joinDate <- timestampToDate(meetupMembers$joinTimestamp)
+meetupMembers$dayMonthYear <- as.Date(meetupMembers$joinDate)
+
+library(zoo)
+
+# format(meetupMembers$joinDate, "%m-%Y")
+
+meetupMembers$monthYear <- as.Date(as.yearmon(meetupMembers$joinDate))
+meetupMembers$quarterYear <- as.Date(as.yearqtr(meetupMembers$joinDate))
+meetupMembers$week <- as.Date("1970-01-01")+7*trunc(as.numeric(meetupMembers$joinDate)/(3600*24*7))
 
 groupBy = function(dates, format) {
   dd = aggregate(dates, by= list(format(dates, format)), function(x) length(x))
@@ -83,12 +91,131 @@ groupBy = function(dates, format) {
   dd
 }
 
-groupBy(meetupMembers$joined, "%m-%Y")
-groupBy(meetupMembers$joined, "%Y")
-groupBy(meetupMembers$joined, "%A")
+groupBy(meetupMembers$joinDate, "%m-%Y")
+groupBy(meetupMembers$joinDate, "%Y")
+groupBy(meetupMembers$joinDate, "%A")
 
-byDayTime = groupBy(meetupMembers$joined, "%A %H:00")
+byDayTime = groupBy(meetupMembers$joinDate, "%A %H:00")
 byDayTime[order(-byDayTime$count),][1:10,]
+
+library(dplyr)
+
+byDay = meetupMembers %.% 
+  group_by(dayMonthYear) %.%
+  summarise(n = n())
+
+plotByDayMonthYear = ggplot(data = meetupMembers %.% 
+                              group_by(dayMonthYear) %.% 
+                              summarise(n = n()), 
+                            aes(x = dayMonthYear, y = n)) + 
+  ylab("Number of members") +
+  xlab("Date") +
+  geom_line(aes(y = cumsum(n)))
+
+groupMembersBy = function(field) {
+  meetupMembers %.% regroup(list(field)) %.% summarise(n = n())
+}
+
+groupBy = function(field) {
+  meetupMembers %.% group_by(field) %.% summarise(n = n())
+}
+
+ggplot(data = meetupMembers %.% 
+         group_by(monthYear) %.%
+         summarise(n = n()), 
+       aes(x = monthYear, y = n)) + 
+  ylab("Number of members") +
+  xlab("Date") +
+  geom_line(aes(y = cumsum(n))) +
+  geom_line(color="blue", type = 'closed')
+
+plotByMonthYear = ggplot(data = meetupMembers %.% 
+         group_by(monthYear) %.%
+         summarise(n = n()), 
+       aes(x = monthYear, y = n)) + 
+  ylab("Number of members") +
+  xlab("Date") +
+  geom_line(aes(y = cumsum(n)))
+
+ggplot(data = meetupMembers %.% 
+         group_by(quarterYear) %.%
+         summarise(n = n()), 
+       aes(x = quarterYear, y = n)) + 
+  ylab("Number of new members") +
+  xlab("Date") +
+  geom_bar(stat="identity", fill = "blue")
+
+ggplot(data = meetupMembers %.% 
+         group_by(monthYear) %.%
+         summarise(n = n()), 
+       aes(x = monthYear, y = n)) + 
+  ylab("Number of new members") +
+  xlab("Date") +
+  geom_bar(stat="identity")
+
+            
+ggplot(data = meetupMembers %.% 
+         group_by(week) %.%
+         summarise(n = n()), 
+       aes(x = week, y = n)) + 
+  ylab("Number of new members") +
+  xlab("Date") +
+  geom_bar(stat="identity")
+
+ggplot(data = meetupMembers %.% 
+         group_by(dayMonthYear) %.%
+         summarise(n = n()), 
+       aes(x = dayMonthYear, y = n)) + 
+  ylab("Number of new members") +
+  xlab("Date") +
+  geom_bar(stat="identity")
+
+summary(meetupMembers[format(meetupMembers$dayMonthYear, "%Y") == 2014,] %.% 
+        group_by(dayMonthYear) %.%
+        summarise(n = n()))
+
+summary(meetupMembers[format(meetupMembers$dayMonthYear, "%Y") == 2013,] %.% 
+          group_by(dayMonthYear) %.%
+          summarise(n = n()))
+
+summary(meetupMembers[format(meetupMembers$dayMonthYear, "%Y") == 2012,] %.% 
+          group_by(dayMonthYear) %.%
+          summarise(n = n()))
+
+summary(meetupMembers[format(meetupMembers$dayMonthYear, "%Y") == 2011,] %.% 
+          group_by(dayMonthYear) %.%
+          summarise(n = n()))
+
+
+meetupMembers %.% 
+  group_by(quarterYear) %.%
+  summarise(n = n())
+
+grid.arrange(plotByDayMonthYear, plotByMonthYear, ncol=1, widths=c(1,1))
+
+# rolling functions
+smoothIndex = rollmean(x = ftseIndex,  # original series
+         k = 30,  # width of the rolling window
+         fill = NA) 
+lines(smoothIndex, col = "RED")
+
+ftseIndex <- EuStockMarkets[, 4]
+plot(ftseIndex, col = "GRAY")
+
+byDayCumSum = meetupMembers %.% 
+  group_by(dayMonthYear) %.% 
+  summarise(n = n()) %.%
+  mutate(n = cumsum(n))
+
+
+byDay = meetupMembers %.% 
+  group_by(dayMonthYear) %.% 
+  summarise(n = n())
+
+smoothByDay = rollmean(x = byDay$n, k = 30, fill = NA)
+
+plot(smoothByDay, col = "GRAY")
+            
 
 # all events
 query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
@@ -153,10 +280,28 @@ ddply(allTheEvents[format(allTheEvents$datetime, "%Y") == 2014,], "event.name", 
       rsvps = sum(rsvps), 
       rsvpsPerEvent = rsvps / count)
 
+
+
 ddply(allTheEvents[format(allTheEvents$datetime, "%Y") == 2014,], .(day=format(datetime, "%A")), summarise, 
       count=length(datetime),
       rsvps=sum(rsvps),
       rsvpsPerEvent = rsvps / count)
+
+ddply(introToGraphs[format(introToGraphs$datetime, "%Y") == 2014,], .(day=format(datetime, "%A")), summarise, 
+      count=length(datetime),
+      rsvps=sum(rsvps),
+      rsvpsPerEvent = rsvps / count)
+
+ddply(introToGraphs, .(day=format(datetime, "%Y")), summarise, 
+      count=length(datetime),
+      rsvps=sum(rsvps),
+      rsvpsPerEvent = rsvps / count)
+
+ddply(events, .(day=format(datetime, "%Y")), summarise, 
+      count=length(datetime),
+      rsvps=sum(rsvps),
+      rsvpsPerEvent = rsvps / count)
+
 
 eventsOf2014 = allTheEvents[format(allTheEvents$datetime, "%Y") == 2014,]
 
@@ -167,6 +312,11 @@ ddply(eventsOf2014, .(day=format(datetime, "%A")), summarise,
 
 ddply(eventsOf2014, .(day=format(datetime, "%A")), summarise, 
       events = paste(unique(event.name), collapse = ","),
+      count=length(datetime),
+      rsvps=sum(rsvps),
+      rsvpsPerEvent = rsvps / count)
+
+ddply(eventsOf2014, .(day=format(datetime, "%A"), event.name), summarise, 
       count=length(datetime),
       rsvps=sum(rsvps),
       rsvpsPerEvent = rsvps / count)
@@ -190,11 +340,10 @@ ddply(ddply(eventsOf2014,
 ddply(ddply(allTheEvents, c("event.name", year="format(datetime, \"%Y\")"), summarise, 
       count = length(datetime), rsvps = sum(rsvps), rsvpsPerEvent = rsvps / count), c("event.name", "year"))
 
-ddply(ddply(allTheEvents, .(event.name, year=format(datetime, "%Y")), summarise, 
+ddply(ddply(allTheEvents, .(event.name, year= format(datetime, "%Y")), summarise, 
             count = length(datetime), rsvps = sum(rsvps), rsvpsPerEvent = rsvps / count), c("event.name", "year"))
 
-ddply(allTheEvents, c("event.name", "year"), summarise, 
-            count = length(datetime), rsvps = sum(rsvps), rsvpsPerEvent = rsvps / count)
+
 
 #hopeless error message for this
 ddply(allTheEvents, "event.name", function(x) {
@@ -385,4 +534,142 @@ summarisedDifference <- function(one, two) {
 df = data.frame(x=c(10,9,8,7,6,5,4,3,2,1), y=c(5,4,3,4,3,2,2,1,2,1))
 ddply(df, .(difference=summarisedDifference(x,y)), summarise, count=length(x))
 
+query = "match (e:Event {name: 'Intro to Graphs'})<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
+         where e.time + e.utc_offset < timestamp()
+         RETURN e.time + e.utc_offset AS time, COUNT(*) AS rsvps"
+rsvpsIntro = cypher(graph, query)
+
+rsvpsIntro$date <- timestampToDate(rsvpsIntro$time)
+rsvpsIntro$date2 = as.Date(rsvpsIntro$date)
+head(rsvpsIntro)
+
+library(dplyr)
+rsvpsIntro %.% arrange(time)
+
+library(scales)
+
+ggplot(data = rsvpsIntro %.% arrange(time), aes(x = date, y = rsvps)) + geom_point()
+ggplot(data = rsvpsIntro %.% arrange(time), aes(x = date, y = rsvps)) + geom_line()
+
+query = "match (e:Event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
+         where e.name <> 'Intro to Graphs' 
+         AND e.name <> \"Hands On Intro to Cypher - Neo4j's Query Language\"
+         AND NOT(e.name =~ \".*Hackathon.*\")
+         AND NOT(e.name =~ \".*training.*\")
+         AND NOT(e.name =~ \".*Training.*\")
+         AND NOT(e.name =~ \".*Tutorial.*\")         
+         AND NOT(e.name =~ \".*Hands on.*\")
+         AND NOT(e.name =~ \".*Lunch.*\")
+         AND NOT(e.name =~ \".*Graph Clinic.*\")
+         AND (e.time + e.utc_offset < timestamp())
+         RETURN e.time + e.utc_offset AS time, COUNT(*) AS rsvps, e.name"
+rsvpsAll = cypher(graph, query)
+
+rsvpsAll$date <- timestampToDate(rsvpsAll$time)
+rsvpsAll$date2 = as.Date(rsvpsAll$date)
+
+head(rsvpsAll)
+
+ggplot(data = rsvpsAll %.% arrange(time), aes(x = date, y = rsvps)) + geom_point() 
+
+ggplot(data = rsvpsAll %.% arrange(time), aes(x = date2, y = rsvps)) + geom_point() + 
+  scale_x_date(breaks = "1 month", minor_breaks = "1 week", labels=date_format("%b %y"))
+  
+ggplot(data = rsvpsAll %.% arrange(time), aes(x = date2, y = rsvps)) +   
+  geom_point(shape=1) + 
+  scale_x_date(breaks = "6 month", minor_breaks = "1 month", labels=date_format("%b %y")) + 
+  geom_smooth(fill=NA) + ylim(0,110)
+
+ggplot(data = rsvpsIntro %.% arrange(time), aes(x = date2, y = rsvps)) +   
+  geom_point(shape=1) + 
+  scale_x_date(breaks = "6 month", minor_breaks = "1 month", labels=date_format("%b %y")) + 
+  geom_smooth(fill=NA) + ylim(0,65)
+
+query = "match (e:Event {name: \"Hands On Intro to Cypher - Neo4j's Query Language\"})<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
+         where e.time + e.utc_offset < timestamp()
+         RETURN e.time + e.utc_offset AS time, COUNT(*) AS rsvps"
+rsvpsCypher = cypher(graph, query)
+
+rsvpsCypher$date <- timestampToDate(rsvpsCypher$time)
+rsvpsCypher$date2 = as.Date(rsvpsCypher$date)
+
+ggplot(data = rsvpsCypher %.% arrange(time), aes(x = date2, y = rsvps)) +   
+  geom_point(shape=1) +   
+  geom_smooth(fill=NA) + ylim(0,65)
+
+query = "match (e:Event {name: \"Intro to Graphs\"})<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
+         where e.time + e.utc_offset < timestamp()
+         RETURN e.time + e.utc_offset AS time, COUNT(*) AS rsvps"
+rsvpsIntro = cypher(graph, query)
+
+rsvpsIntro$date <- timestampToDate(rsvpsIntro$time)
+rsvpsIntro$date2 = as.Date(rsvpsIntro$date)
+
+ggplot(data = rsvpsIntro %.% arrange(time), aes(x = date2, y = rsvps)) +   
+  geom_point(shape=1) +   
+  geom_smooth(fill=NA) + ylim(0,65)
+
+
+query = "match (e:Event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
+         where (e.time + e.utc_offset < timestamp())
+         RETURN e.time + e.utc_offset AS time, COUNT(*) AS rsvps, e.name"
+rsvpsEverything = cypher(graph, query)
+
+rsvpsEverything$date <- timestampToDate(rsvpsEverything$time)
+rsvpsEverything$date2 = as.Date(rsvpsEverything$date)
+rsvpsEverything$monthYear = format(rsvpsEverything$date, "%Y-%m")
+
+
+rsvpsEverything %.% 
+  group_by(format(date, "%b-%Y")) %.% 
+  summarise(n = sum(rsvps))
+
+rsvpsByMonth = rsvpsEverything %.% 
+  group_by(monthYear) %.% 
+  summarise(n = sum(rsvps))
+
+ggplot(data = rsvpsByMonth, aes(x = monthYear, y = n)) + geom_point()
+
+ggplot(data = rsvpsEverything %.% arrange(time), aes(x = date2, y = rsvps)) +   
+  geom_point(shape=1) +   
+  geom_smooth(fill=NA)
+
+
+query = "MATCH (e:Event {name: 'Intro to Graphs'})<-[:TO]-(rsvp{response: 'yes'})<-[:RSVPD]-()
+WITH e.name AS name, e.time + e.utc_offset AS time, e.announced_at AS announcedAt, COUNT(*) as yesRSVPs, COLLECT(rsvp.time) AS rsvps
+WITH name, time, announcedAt, (time - announcedAt) / 1000 / 60 / 60 / 24 AS days, yesRSVPs, rsvps
+RETURN name, time, announcedAt, days, yesRSVPs, REDUCE(total=0, rsvp IN rsvps |  CASE WHEN rsvp > announcedAt THEN total + 1 ELSE total END) AS after,
+REDUCE(total=0, rsvp IN rsvps |  CASE WHEN rsvp <= announcedAt THEN total + 1 ELSE total END) AS before
+ORDER BY yesRSVPs DESC"
+
+events = subset(cypher(graph, query), !is.na(announcedAt))
+
+events$announcedAt = timestampToDate(events$announcedAt)
+events$time = timestampToDate(events$time)
+
+head(events)
+
+events$timeDiff = as.numeric(events$time - events$announcedAt, units = "days")
+
+all = ggplot(data = events, aes(x = timeDiff, y = yesRSVPs)) + 
+  geom_point() +
+  geom_smooth(method=lm, fill = NA)
+
+after = ggplot(data = events, aes(x = timeDiff, y = after)) + 
+  geom_point() + 
+  geom_smooth(method=lm, fill = NA)  
+
+before = ggplot(data = events, aes(x = timeDiff, y = before)) + 
+  geom_point() +
+  geom_smooth(method=lm, fill = NA)  
+
+with(events, cor.test(timeDiff, yesRSVPs, method = "pearson"))
+with(events, cor.test(timeDiff, after, method = "pearson"))
+with(events, cor.test(timeDiff, before, method = "pearson"))
+
+library(gridExtra)
+
+grid.arrange(all, before, after)
+
+?geom_smooth
 
