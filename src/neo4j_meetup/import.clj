@@ -153,7 +153,7 @@
     FOREACH(i in RANGE(0, length(days)-2) | 
       FOREACH(day1 in [days[i]] | 
         FOREACH(day2 in [days[i+1]] | 
-          CREATE UNIQUE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
+          MERGE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
 
 (defn create-event [event]
   (tx/statement "MATCH (g:Group {id: {group}.id})

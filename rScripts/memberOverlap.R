@@ -96,7 +96,8 @@ groupBy(meetupMembers$joinDate, "%Y")
 groupBy(meetupMembers$joinDate, "%A")
 
 byDayTime = groupBy(meetupMembers$joinDate, "%A %H:00")
-byDayTime[order(-byDayTime$count),][1:10,]
+byDayTime[order(-byDayTime$count),][1:20,]
+
 
 library(dplyr)
 
@@ -104,17 +105,80 @@ byDay = meetupMembers %.%
   group_by(dayMonthYear) %.%
   summarise(n = n())
 
-plotByDayMonthYear = ggplot(data = meetupMembers %.% 
-                              group_by(dayMonthYear) %.% 
-                              summarise(n = n()), 
-                            aes(x = dayMonthYear, y = n)) + 
-  ylab("Number of members") +
-  xlab("Date") +
-  geom_line(aes(y = cumsum(n)))
+# plotByDayMonthYear = ggplot(data = meetupMembers %.% 
+#                               group_by(dayMonthYear) %.% 
+#                               summarise(n = n()), 
+#                             aes(x = dayMonthYear, y = n)) + 
+#   ylab("Number of members") +
+#   xlab("Date") +
+#   geom_line(aes(y = cumsum(n)))
 
 groupMembersBy = function(field) {
   meetupMembers %.% regroup(list(field)) %.% summarise(n = n())
 }
+
+byWeek = groupMembersBy('week')
+
+head(byWeek, 30)
+byWeek
+
+mav <- function(x,n=5){filter(x,rep(1/n,n), sides=1)}
+
+mav(byWeek$n, 4)
+
+library(dplyr)
+(x + lag(x,1) + lag(x,2)) / 3
+
+byWeek$n
+ggplot(data = byWeek, aes(y = n, x = week)) + geom_point() + geom_smooth(fill = NA)
+
+fourWeekRolling = na.omit(mav(byWeek$n, 4))
+
+library(zoo)
+
+byWeekRolling = data.frame(n = rollmean(byWeek$n, 4), 
+                           week = 4:(length(fourWeekRolling) + 3))
+
+ggplot(byWeekRolling, aes(x = week, y = n)) + 
+  geom_line() + 
+  ylab(label="Number of new members") + 
+  xlab("Week Number")
+
+head(byWeekRolling)
+head(byWeek)
+
+rollingMean = rollmean(byWeek$n, 4)
+
+
+
+joinsByWeek = data.frame(actual = byWeek$n, 
+                         week = byWeek$week,
+                         rolling = rollmean(byWeek$n, 4, fill = NA, align=c("right")))
+
+ggplot(joinsByWeek, aes(x = week)) + 
+  geom_line(aes(y = rolling), colour="blue") + 
+  geom_line(aes(y = actual), colour = "grey") + 
+  ylab(label="Number of new members") + 
+  xlab("Week")
+
+qplot(1:length(rollingMean), rollingMean, xlab ="Week Number") + 
+  geom_line()
+
+ggplot(data.frame(week = 1:length(rollingMean), rolling = rollingMean),
+       aes(x = week, y = rolling)) +
+  geom_line()
+
+library(reshape)
+meltedJoinsByWeek = melt(joinsByWeek, id = 'week')
+head(meltedJoinsByWeek)
+
+ggplot(meltedJoinsByWeek, aes(x = week, y = value, colour = variable)) + 
+  geom_line() + 
+  ylab(label="Number of new members") + 
+  xlab("Week Number") + 
+  scale_colour_manual(values=c("grey", "blue"))
+
+byWeek$n
 
 groupBy = function(field) {
   meetupMembers %.% group_by(field) %.% summarise(n = n())
@@ -219,12 +283,91 @@ plot(smoothByDay, col = "GRAY")
 
 # all events
 query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-()
-         WHERE (event.time + event.utc_offset) < timestamp()
-         RETURN event.time + event.utc_offset AS eventTime, event.name, COUNT(*) AS rsvps"
-events = cypher(graph, query)
-events$datetime <- timestampToDate(events$eventTime)
-events$day <- format(events$datetime, "%A")
-events$monthYear <- format(events$datetime, "%m-%Y")
+WHERE (event.time + event.utc_offset) < timestamp()
+RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps"
+
+officeEventsQuery = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+                           (event)-[:HELD_AT]->(venue)
+                     WHERE (event.time + event.utc_offset) < timestamp() AND venue.name IN [\"Neo Technology\", \"OpenCredo\"]
+                     RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps"
+
+events = subset(cypher(graph, query), !is.na(announcedAt))
+events = subset(cypher(graph, officeEventsQuery), !is.na(announcedAt))
+
+events$eventTime <- timestampToDate(events$eventTime)
+events$time = format(events$eventTime, "%H:%M")
+events$day <- format(events$eventTime, "%A")
+events$monthYear <- format(events$eventTime, "%m-%Y")
+events$month <- format(events$eventTime, "%m")
+events$year <- format(events$eventTime, "%Y")
+events$announcedAt<- timestampToDate(events$announcedAt)
+events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
+
+head(events)
+
+
+ggplot(aes(y = rsvps, x = eventTime, colour = practical), data = events) + geom_point()
+
+events %>%
+  group_by(practical) %>%
+  summarise(n = n())
+
+events %>% 
+  group_by(practical, year) %>% 
+  summarise(numberOfEvents = n(), totalRsvps = sum(rsvps)) %>% 
+  mutate(ave = totalRsvps / numberOfEvents) %>%
+  select(-totalRsvps)
+
+events %>% select(event.name, year, month, time, rsvps) %>% arrange(year, month)
+
+ggplot(aes(y = rsvps, x = eventTime, colour = time), data = events) + 
+  geom_point()
+
+summary(fit)
+
+head(events)
+
+predict(fit, 
+        data.frame(practical=c(TRUE)), interval = "confidence")
+
+x = data.frame(name = c("Java Hackathon", "Intro to Graphs", "Hands on Cypher"))
+x$practical = grepl("Hackathon|Hands on|Hands On", x$name)
+x
+
+# 53% explained
+summary(lm(rsvps ~., data = subset(events, select = c(rsvps, day, timeDiff, month, year, practical))))
+
+events %>% group_by(practical) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
+subset(events, year == 2013) %>% group_by(practical) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
+subset(events, practical == FALSE) %>% group_by(year) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
+
+?contains
+
+summary(lm(rsvps ~., data = subset(events, select = c(rsvps, day, month, timeDiff))))
+
+# will always show Wednesday as significant because that's when the last month meetup is
+summary(lm(rsvps ~ announcedAt+day, data = subset(events, select = c(rsvps, announcedAt, day))))
+
+# just office meetups
+
+
+
+library(dplyr)
+lm(rsvps ~., data = subset(events, select = -c(event.name)))
+
+# linear model based on day
+eventsFit = lm(rsvps ~., data = subset(events, select = c(rsvps, day, month)))
+summary(eventsFit)
+
+ggplot(aes(x = day, y = rsvps), data = events) + geom_point()
+
+events[events["event.name"] == "Intro to Graphs", ]
+introToGraphs = subset(events, event.name == "Intro to Graphs")
+
+ggplot(aes(x = year, y = rsvps), data = introToGraphs) + geom_point()
+
+summary(lm(rsvps ~., data = events))
+summary(lm(rsvps ~., data = subset(introToGraphs, select = -c(event.name))))
 
 # events with most rsvps
 ddply(events, .(rsvps = rsvps* -1))[1:10, ]
@@ -673,3 +816,17 @@ grid.arrange(all, before, after)
 
 ?geom_smooth
 
+
+test_data <- data.frame(
+  var0 = 100 + c(0, cumsum(runif(49, -20, 20))),
+  var1 = 150 + c(0, cumsum(runif(49, -10, 10))),
+  date = seq.Date(as.Date("2002-01-01"), by="1 month", length.out=100))
+
+require("reshape")
+require("ggplot2")
+
+test_data_long <- melt(test_data, id="date")  # convert to long format
+
+ggplot(data=test_data_long,
+       aes(x=date, y=value, colour=variable)) +
+  geom_line()

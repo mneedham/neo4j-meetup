@@ -1,4 +1,4 @@
-(ns neo4j-meetup.views.layout
+  (ns neo4j-meetup.views.layout
   (:require [selmer.parser :as parser]
             [clojure.string :as s]
             [ring.util.response :refer [content-type response]]
@@ -19,4 +19,3 @@
 
 (defn render [template & [params]]
   (RenderableTemplate. template params))
-

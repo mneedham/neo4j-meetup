@@ -119,11 +119,16 @@
     (timed #(save (str "data/members-" date "/" id ".json")
                   (get-all members-of-other-group {:groupid id})) (str "group " id))))
 
+(defn event-ids [date]
+  (map :id (load-json (str "data/events-" date ".json"))))
+
 (defn -main [& args]
   (let [date (f/unparse format-as-year-month-day (t/now))]
-    (timed #(save (str "data/groups-" date ".json") (get-all groups)) "groups")
+    (timed #(save (str "data/groups-" date ".json") (get-all groups))
+           "groups")
     (save-other-groups date)
-    (timed #(save (str "data/events-" date ".json") (get-all events)) "events")
+    (timed #(save (str "data/events-" date ".json") (get-all events))
+           "events")
     (timed #(save (str "data/rsvps-" date ".json")
-                  (mapcat (fn [data] ( get-all (partial rsvps data)))
-                         (map :id (load-json (str "data/events-" date ".json"))))) "rsvps") ))
+                  (mapcat (fn [data] (get-all (partial rsvps data))) (event-ids date)))
+           "rsvps") ))
