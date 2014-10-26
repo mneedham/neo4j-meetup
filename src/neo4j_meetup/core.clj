@@ -44,17 +44,19 @@
        :body :results))
 
 (defn events
-  [{perpage :perpage offset :offset orderby :orderby}]
-  (->> (client/get
-        (str "https://api.meetup.com/2/events?page=" perpage
+  [group-ids {perpage :perpage offset :offset orderby :orderby}]
+  (let [uri (str "https://api.meetup.com/2/events?page=" perpage
              "&offset=" offset
              "&orderby=" orderby
              "&fields=announced_at"
              "&status=upcoming,past&"
-             "&group_urlname=" MEETUP_NAME
-             "&key=" MEETUP_KEY)
-        {:as :json})
-       :body :results))
+             "&group_id=" (clojure.string/join "," group-ids)
+             "&key=" MEETUP_KEY)]
+    (->> (client/get
+          uri
+          {:as :json})
+         :body :results)))
+
 
 (defn groups
   [{perpage :perpage offset :offset orderby :orderby}]
@@ -70,9 +72,9 @@
        :body :results))
 
 (defn rsvps
-  [event-id {perpage :perpage offset :offset orderby :orderby}]
+  [event-ids {perpage :perpage offset :offset orderby :orderby}]
   (let [uri (str "https://api.meetup.com/2/rsvps?page=" perpage
-             "&event_id=" event-id
+             "&event_id=" (clojure.string/join "," event-ids)
              "&offset=" offset
              "&orderby=" orderby
              "&key=" MEETUP_KEY)]
@@ -122,13 +124,22 @@
 (defn event-ids [date]
   (map :id (load-json (str "data/events-" date ".json"))))
 
+(defn event-ids [date]
+  (map #(-> (% :event_url) (clojure.string/split #"/") last)
+       (load-json (str "data/events-" date ".json"))))
+
+(defn group-ids [date]
+  (map :id (load-json (str "data/groups-" date ".json"))))
+
 (defn -main [& args]
   (let [date (f/unparse format-as-year-month-day (t/now))]
     (timed #(save (str "data/groups-" date ".json") (get-all groups))
            "groups")
     (save-other-groups date)
-    (timed #(save (str "data/events-" date ".json") (get-all events))
+    (timed #(save (str "data/events-" date ".json")
+                  (get-all (partial events (group-ids date))))
            "events")
     (timed #(save (str "data/rsvps-" date ".json")
-                  (mapcat (fn [data] (get-all (partial rsvps data))) (event-ids date)))
+                  (mapcat (fn [event-ids] (get-all (partial rsvps event-ids)))
+                          (partition-all 200 (event-ids date))))
            "rsvps") ))
