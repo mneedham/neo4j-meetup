@@ -1,7 +1,8 @@
 {% extends "neo4j_meetup/views/templates/base.html" %}
 {% block content %}
   <div class="row-fluid">
-    <h3>{{result.group.data.name}}</h3>
+    <h3>{{result.group.data.name}} <a href="{{result.group.data.link}}"
+    target="_blank"><img src="/img/external.jpg" width="15px" /></a></h3>
 
 <ul class="nav nav-tabs">
   <li class="active tab"><a href="#overview" data-toggle="tab">Overview</a></li>
