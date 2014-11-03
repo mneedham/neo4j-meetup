@@ -3,19 +3,26 @@ library(ggplot2)
 library(dplyr)
 library(car)
 
-# all events
+# all neo events
 query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
          (event)-[:HELD_AT]->(venue)
 WHERE (event.time + event.utc_offset) < timestamp()
 RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps, venue.name AS venue"
 
-officeEventsQuery = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+# neo events in the office
+query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
                            (event)-[:HELD_AT]->(venue)
                      WHERE (event.time + event.utc_offset) < timestamp() AND venue.name IN [\"Neo Technology\", \"OpenCredo\"]
                      RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps"
 
-events = subset(cypher(graph, query), !is.na(announcedAt))
-events = subset(cypher(graph, officeEventsQuery), !is.na(announcedAt))
+# london nosql events
+query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+         (event)-[:HELD_AT]->(venue)
+WHERE (event.time + event.utc_offset) < timestamp()
+RETURN g.name, event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps, venue.name AS venue"
+
+#events = subset(cypher(graph, query), !is.na(announcedAt))
+events = cypher(graph, query)
 
 events$eventTime <- timestampToDate(events$eventTime)
 events$time = format(events$eventTime, "%H:%M")
@@ -24,8 +31,21 @@ events$monthYear <- format(events$eventTime, "%m-%Y")
 events$month <- format(events$eventTime, "%m")
 events$year <- format(events$eventTime, "%Y")
 events$announcedAt<- timestampToDate(events$announcedAt)
+#events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
 events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
 
+ggplot(aes(x = venue, y = rsvps), data = events) + geom_point()
+
+summary(lm(rsvps ~ venue, data = events))
+
+events %>% 
+  group_by(venue) %>%
+  summarise(events = n()) %>%
+  arrange(desc(events))
+
+summary(lm(rsvps ~ month, data = events))
+
+events
 # 81% of variation explained
 summary(lm(rsvps ~., data = events))
 
