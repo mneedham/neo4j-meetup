@@ -37,6 +37,12 @@ lein run -m neo4j-meetup.import 2014-05-31
 
 You need to pass in the date when you downloaded the data as a parameter. In this case my most recent data set is on 31st May 2014 so I'll import that.
 
+Start the applications
+
+````
+lein ring server
+````
+
 ## License
 
 Copyright © 2014 Mark Neehdham

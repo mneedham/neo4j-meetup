@@ -147,16 +147,19 @@
      first)))
 
 (defn all-events [meetup-id]
-  (let [query "MATCH (event:Event)-[:HELD_AT]->(venue)
+  (let [query "MATCH (event:Event)-[:HELD_AT]->(venue),
+                     (event)<-[:HOSTED_EVENT]-(group)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
-               WITH event, venue, COLLECT({rsvp: rsvp, initial:initial, person:person}) AS responses
+               WITH event, venue, group, COLLECT({rsvp: rsvp, initial:initial, person:person}) AS responses
                WITH event,
                     venue,
+                    group,
                     [response in responses WHERE response.initial is null AND response.rsvp.response = 'yes'] AS a,
                     [response in responses WHERE NOT response.initial is null] AS d
                RETURN event,
                       venue,
+                      group,
                       LENGTH(a) + REDUCE(acc=0, count IN [value IN a | value.rsvp.guests] | acc + count) as attendees,
                       LENGTH(d) + REDUCE(acc=0, count IN [value IN d | value.rsvp.guests] | acc + count) as dropouts
                       "]
@@ -166,20 +169,23 @@
                       (+ (-> % :event :data :time) (-> % :event :data :utc_offset))))))))
 
 (defn event [event-id]
-  (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue)
+  (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue),
+                     (event)<-[:HOSTED_EVENT]-(group)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
-               WITH event, venue, rsvp, person
+               WITH event, venue, rsvp, person, group
                ORDER BY rsvp.time
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
                WITH event,
-                    venue, 
+                    venue,
+                    group, 
                     COLLECT({rsvp: rsvp, initial: initial, person: person}) AS responses
                WITH event,
                     venue,
+                    group,
                     [response in responses WHERE response.initial is null
                                            AND response.rsvp.response = 'yes'] as attendees,
                     [response in responses WHERE not response.initial is null] as dropouts
-               RETURN event, venue, attendees, dropouts
+               RETURN event, venue, group, attendees, dropouts
 "
         params {:eventId event-id}]
     (->>
@@ -295,13 +301,13 @@
                WITH member, COLLECT({group: group, membership: membership}) AS groups
                OPTIONAL MATCH (member)-[:INTERESTED_IN]->(topic)
                WITH member, COLLECT(topic) as topics, groups
-               OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)
+               OPTIONAL MATCH (member)-[:RSVPD]->(rsvp)-[:TO]-(event)<-[:HOSTED_EVENT]-(group)
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
-               WITH member, rsvp, event, initial, topics, groups           
+               WITH member, rsvp, event, group, initial, topics, groups           
                ORDER BY event.time
                
                RETURN member, 
-                      COLLECT({rsvp: rsvp, initial:initial, event:event}) AS rsvps, topics, groups
+                      COLLECT({rsvp: rsvp, initial:initial, event:event, group:group}) AS rsvps, topics, groups
 "
         params {:memberId (read-string member-id)}]
     (->>
@@ -309,10 +315,10 @@
      first)))
 
 (defn venue [venue-id]
-  (let [query "MATCH (venue:Venue {id: {venueId}})<-[:HELD_AT]-(meetup)
-               WITH venue, meetup
+  (let [query "MATCH (venue:Venue {id: {venueId}})<-[:HELD_AT]-(meetup)<-[:HOSTED_EVENT]-(group)
+               WITH venue, meetup, group
                ORDER BY meetup.time
-               RETURN venue, COLLECT(meetup) AS meetups"
+               RETURN venue, COLLECT({meetup: meetup, group: group}) AS meetups"
         params {:venueId (read-string venue-id)}]
     (->>
      (db/cypher query params)

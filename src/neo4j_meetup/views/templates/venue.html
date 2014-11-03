@@ -12,13 +12,15 @@
      <table class="table">
        <thead>
          <th>Title</th>
-         <th>Data</th>
+         <th>Date</th>
+         <th>Group</th>
         </thead>
        <tbody>
            {% for response in result.meetups %}
            <tr>
-             <td><a href="/events/{{response.data.id}}">{{response.data.name}}</a></td> 
-             <td>{{response.data.time|timestamp-to-date}}</td>
+             <td><a href="/events/{{response.meetup.data.id}}">{{response.meetup.data.name}}</a></td> 
+             <td>{{response.meetup.data.time|timestamp-to-date}}</td>
+             <td><a href="/groups/{{response.group.data.id}}">{{response.group.data.name}}</a></td> 
            </tr>
      {% endfor %}
       </tbody>

@@ -390,3 +390,12 @@ MATCH (g1)<-[:MEMBER_OF]-()
 RETURN g1.name, id(g1), COUNT(*) AS members, others 
 ORDER BY id(g1)
 
+// find people from the group who signed up for another NoSQL meetup on the same day
+
+MATCH (g:Group {name: "Neo4j - London User Group"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+         (event)-[:HELD_AT]->(venue), (event)-[:HAPPENED_ON]->(day)<-[:HAS_DAY]-(month)<-[:HAS_MONTH]-(year)
+WITH event, COUNT(*) AS rsvps, day, month, year, venue, g
+MATCH (day)<-[:HAPPENED_ON]-(anotherEvent:Event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(member)-[:MEMBER_OF]->(g)
+WHERE event <> anotherEvent
+RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name,  rsvps, venue.name AS venue, day.day, month.month, year.year, COUNT(*) AS clash, COLLECT(DISTINCT member.name)
+ORDER BY clash DESC

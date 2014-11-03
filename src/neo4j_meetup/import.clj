@@ -156,7 +156,7 @@
           MERGE (day1)-[:NEXT]->(day2))))" {:start 2011 :end 2014}))
 
 (defn create-event [event]
-  (tx/statement "MATCH (g:Group {id: {group}.id})
+  (tx/statement (str "MATCH (g:Group {id: {group}.id})
                  MERGE (e:Event {id: {event}.id})
                  ON CREATE SET e = {event}
                  MERGE (g)-[:HOSTED_EVENT]->(e)
@@ -164,10 +164,12 @@
                  MATCH (year:Year {year: {timetree}.year })
                  MATCH (year)-[:HAS_MONTH]->(month {month: {timetree}.month })
                  MATCH (month)-[:HAS_DAY]->(day {day: {timetree}.day })
-                 CREATE (e)-[:HAPPENED_ON]->(day) 
-                 MERGE (v:Venue {id: {venue}.id})
-                 ON CREATE SET v = {venue}
-                 MERGE (e)-[:HELD_AT]->(v)"
+                 CREATE (e)-[:HAPPENED_ON]->(day) "
+                 (if (-> event :venue :id)
+                   "MERGE (v:Venue {id: {venue}.id})
+                    ON CREATE SET v = {venue}
+                    MERGE (e)-[:HELD_AT]->(v)"
+                   ""))
                 {:group (:group event)
                  :venue (:venue event)
                  :timetree (as-timetree (:time event))              
@@ -179,20 +181,20 @@
                          :utc_offset (:utc_offset event)}}))
 
 (defn create-group [group]
-  (tx/statement "MERGE (g:Group {id: {group}.id})
+    (tx/statement "MERGE (g:Group {id: {group}.id})
                  SET g = {group}
                  WITH g
                  UNWIND {topics} AS topic
                  MATCH (t:Topic {id: topic.id})
                  MERGE (g)-[:HAS_TOPIC]->(t)"
-                {:group {:id (:id group)
-                         :city (:city group)
-                         :name (:name group)
-                         :link (:link group)
-                         :description (:description group)
-                         :created (:created group)
-                         }
-                 :topics (:topics group)}))
+                  {:group {:id (:id group)
+                           :city (:city group)
+                           :name (:name group)
+                           :link (:link group)
+                           :description (:description group)
+                           :created (:created group)
+                           }
+                   :topics (:topics group)}))
 
 (defn create-topic [topic]
   (tx/statement "CREATE (t:Topic {topic})" {:topic topic}))
@@ -239,8 +241,8 @@
 
 (defn link-credo-venues []
   (db/tx-api-single "MATCH (v1:Venue {id: 9695352})
-                  MATCH (v2:Venue {id: 10185422})
-                  MERGE (v1)-[:ALIAS_OF]->(v2)"))
+                     MATCH (v2:Venue {id: 10185422})
+                     MERGE (v1)-[:ALIAS_OF]->(v2)"))
 
 (defn link-adjacent-memberships []
   (db/tx-api-single "
@@ -322,9 +324,9 @@
                (str "members topics of " (extract-group-id file)))))
     (timed #(db/tx-api create-event  (load-json (str "data/events-" date ".json")))
            "events")
-    (timed #(db/tx-api create-rsvp
-                       (rsvps-with-responses
-                        (load-json (str "data/rsvps-" date ".json"))))
-           "rsvps")
+    (doseq [subset-rsvps
+            (partition-all 4500
+                           (rsvps-with-responses (load-json (str "data/rsvps-" date ".json"))))]
+      (timed #(db/tx-api create-rsvp subset-rsvps) "rsvps"))
     (timed #(link-credo-venues) "credo venues")
     (timed #(link-adjacent-memberships) "adjacent memberships")))
