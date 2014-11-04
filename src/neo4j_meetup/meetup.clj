@@ -172,13 +172,14 @@
   (let [query "MATCH (event:Event {id: {eventId}})-[:HELD_AT]->(venue),
                      (event)<-[:HOSTED_EVENT]-(group)
                OPTIONAL MATCH (event)<-[:TO]-(rsvp)<-[:RSVPD]-(person)
-               WITH event, venue, rsvp, person, group
+               OPTIONAL MATCH (person)-[:RSVPD]->({response: 'yes'})-[:TO]->(otherEvent)-[:HAPPENED_ON]->()<-[:HAPPENED_ON]-(event)
+               WITH event, venue, rsvp, person, group, COLLECT(otherEvent) AS otherEvents
                ORDER BY rsvp.time
                OPTIONAL MATCH (rsvp)<-[:NEXT]-(initial)
                WITH event,
                     venue,
                     group, 
-                    COLLECT({rsvp: rsvp, initial: initial, person: person}) AS responses
+                    COLLECT({rsvp: rsvp, initial: initial, person: person, otherEvents: otherEvents}) AS responses
                WITH event,
                     venue,
                     group,

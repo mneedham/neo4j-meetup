@@ -37,7 +37,13 @@
            {% for response in result.attendees %}
            <tr>
              <td><a href="/members/{{response.person.data.id}}">{{response.person.data.name}}</a></td> 
-             <td>{{response.rsvp.data.response}}</td>
+             <td>
+                 <p>{{response.rsvp.data.response}}</p>
+                 {% for other in response.otherEvents %}
+                     <p class="small"><a href="/events/{{other.data.id}}">{{other.data.name}}</a></p>
+                 {% endfor %}
+
+             </td>
              <td>{{response.rsvp.data.time|timestamp-to-date}}</td>
              <td>{{response.rsvp.data.guests|guestify}}</td>
            </tr>

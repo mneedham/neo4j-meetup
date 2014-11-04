@@ -34,6 +34,7 @@
               (group-by #(> (->> % :timestamp) now))))
 
 (add-filter! :timestamp-to-date #(if (= % nil) "-" (timestamp/as-date %)))
+(add-filter! :join-with-comma #(clojure.string/join "," %))
 (add-filter! :guestify #(if (= % 0) "-" %))
 
 (defn choose-tag-size [freq]
