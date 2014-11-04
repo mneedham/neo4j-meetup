@@ -25,23 +25,11 @@
           <td width="5%">{{row.dropouts}}</td>          
         </tr>
         {% endfor %}
-
-      </tbody>
-    </table>
-
-    <h3>Previous meetups</h3>
-    <table class="table">
-      <thead>
-          <tr>
-            <th>Title</th>
-            <th>Group</th>
-            <th>Venue</th>
-            <th>Date</th>
-            <th>Attendees</th>
-            <th>Dropouts</th>
-          </tr>
-      </thead>  
-      <tbody>
+    <tr>
+        <td colspan="6">
+           <h3>Previous meetups</h3>
+       </td>
+    </tr>
         {% for row in past %}
         <tr>
           <td width="30%"><a href="/events/{{row.event.data.id}}">{{row.event.data.name}}</a></td>
