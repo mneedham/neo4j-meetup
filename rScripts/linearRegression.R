@@ -40,7 +40,7 @@ summary(lm(rsvps ~ venue, data = events))
 
 events %>% 
   group_by(venue) %>%
-  summarise(events = n()) %>%
+  dplyr::summarise(events = n()) %>%
   arrange(desc(events))
 
 summary(lm(rsvps ~ month, data = events))
@@ -211,7 +211,7 @@ head(events)
 
 events %>% 
   group_by(month) %>%
-  summarise(events = n(), years = paste(unique(year), collapse = ","), count = sum(rsvps), max = max(rsvps)) %>%
+  dplyr::summarise(events = n(), years = paste(unique(year), collapse = ","), count = sum(rsvps), max = max(rsvps)) %>%
   mutate(ave = count / events) %>%
   arrange(desc(ave))
 

@@ -96,7 +96,10 @@ groupBy(meetupMembers$joinDate, "%Y")
 groupBy(meetupMembers$joinDate, "%A")
 
 byDayTime = groupBy(meetupMembers$joinDate, "%A %H:00")
-byDayTime[order(-byDayTime$count),][1:20,]
+byDayTime[order(-byDayTime$count),][1:5,]
+
+byDayTime[order(-byDayTime$count),] %>% head(5)
+byDayTime %>% arrange(desc(count)) %>% head(5)
 
 
 library(dplyr)
@@ -340,6 +343,7 @@ summary(lm(rsvps ~., data = subset(events, select = c(rsvps, day, timeDiff, mont
 events %>% group_by(practical) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
 subset(events, year == 2013) %>% group_by(practical) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
 subset(events, practical == FALSE) %>% group_by(year) %>% summarise(n = n(), x = sum(rsvps)) %>% mutate(ave = x / n)
+
 
 ?contains
 
