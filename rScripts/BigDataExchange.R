@@ -109,7 +109,7 @@ query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:
                 event.announced_at AS announcedAt, 
                 event.name, 
                 COUNT(*) AS rsvps, 
-                venue.name AS venue"
+                venue.name AS venue, venue.lat AS lat, venue.lon AS lon"
 
 events = cypher(graph, query)
 
@@ -122,10 +122,59 @@ events$year <- format(events$eventTime, "%Y")
 events$announcedAt<- timestampToDate(events$announcedAt)
 events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
 
+byVenue = events %>% 
+  count(lat, lon, venue) %>% 
+  ungroup() %>% 
+  arrange(desc(n)) %>% 
+  dplyr::rename(count = n)
+
+map = get_map(location = 'London', zoom = 12)
+ggmap(map) +
+  geom_point(aes(x = lon, y = lat, size = count), 
+             data = byVenue,
+             col = "red",
+             alpha = 0.8)
+
+library(geosphere)
+library(cluster)
+
+byVenue[1,]
+byVenue %>% filter(row_number() == 1)
+
+distToVenues = function(venue, otherVenues) {  
+  dist = by(otherVenues, 1:nrow(otherVenues), function(row) {
+    distHaversine(c(venue$lon,venue$lat),c(row$lon,row$lat))
+  }) %>% cbind() %>% as.vector()
+  otherVenues %>% mutate(dist = dist)
+}
+
+distToVenues(byVenue %>% slice(1), byVenue) %>% filter(dist < 100)
+distToVenues(byVenue %>% slice(2), byVenue) %>% filter(dist < 100)
+
+distHaversine(c(51.52482,-0.099109),c(51.52451,-0.099152))
+?distHaversine
+
+clusteramounts = 40
+distance.matrix = (distm(byVenue[,c("lon","lat")]))
+clustersx <- as.hclust(agnes(distance.matrix, diss = T))
+byVenue$group <- cutree(clustersx, k=clusteramounts)
+byVenue %>% arrange(group) %>% head(50)
+
+
+?rename
+
+?select
+
 events %>% 
   group_by(venue) %>%
   dplyr::summarise(events = n()) %>%
   arrange(desc(events))
+
+events %>% 
+  group_by(venue) %>%
+  dplyr::summarise(events = n()) %>%
+  arrange(desc(events))
+
 
 events %>% 
   group_by(month) %>%
@@ -136,6 +185,7 @@ events %>%
   arrange(desc(ave))
 
 # chart showing how many people attend by month
+
 
 # histogram showing the number of attendees - like what Martin did with goals scored
 
