@@ -11,54 +11,7 @@ library(igraph)
 timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
 graph = startGraph("http://localhost:7474/db/data/")
 
-# Show member overlap between the different groups
-query = "MATCH (group1:Group), (group2:Group)
-         WHERE group1 <> group2
-         OPTIONAL MATCH p = (group1)<-[:MEMBER_OF]-()-[:MEMBER_OF]->(group2)
-         WITH group1, group2, COLLECT(p) AS paths
-         RETURN group1.name, group2.name, LENGTH(paths) as commonMembers
-         ORDER BY group1.name, group2.name"
 
-group_overlap = cypher(graph, query)
-
-ggplot(group_overlap, aes(x=group1.name, y=group2.name, fill=commonMembers)) + 
-  geom_bin2d() +
-  geom_text(aes(label = commonMembers)) +
-  labs(x= "Group", y="Group", title="Member Group Member Overlap") +
-  scale_fill_gradient(low="white", high="red") +
-  theme(axis.text = element_text(size = 12, color = "black"),
-        axis.title = element_text(size = 14, color = "black"),
-        plot.title = element_text(size = 16, color = "black"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-
-# Show member overlap as a percentage
-
-query = "MATCH (group1:Group), (group2:Group)
-         WHERE group1 <> group2
-         OPTIONAL MATCH (group1)<-[:MEMBER_OF]-(member)
- 
-         WITH group1, group2, COLLECT(member) AS group1Members
-         WITH group1, group2, group1Members, LENGTH(group1Members) AS numberOfGroup1Members
-
-         UNWIND group1Members AS member
-         OPTIONAL MATCH path =  (member)-[:MEMBER_OF]->(group2) 
-         WITH group1, group2, COLLECT(path) AS paths, numberOfGroup1Members
-         WITH group1, group2, LENGTH(paths) as commonMembers, numberOfGroup1Members
-  
-         RETURN group1.name, group2.name, toInt(round(100.0 * commonMembers / numberOfGroup1Members)) AS percentage
-         ORDER BY  group1.name, group1.name"
-
-group_overlap_percentage = cypher(graph, query)
-
-ggplot(group_overlap_percentage, aes(x=group2.name, y=group1.name, fill=percentage)) + 
-  geom_bin2d() +
-  geom_text(aes(label = percentage)) +
-  labs(x= "Group", y="Group", title="Member Group Member Overlap") +
-  scale_fill_gradient(low="white", high="red") +
-  theme(axis.text = element_text(size = 12, color = "black"),
-        axis.title = element_text(size = 14, color = "black"),
-        plot.title = element_text(size = 16, color = "black"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
 # When did people join the group?
 query = "MATCH (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group {name: \"Neo4j - London User Group\"})
@@ -100,43 +53,6 @@ ggplot(data = meetupMembers %>% group_by(dayMonthYear) %>% dplyr::summarise(n = 
   xlab("Date") +
   geom_line()
 
-# events
-query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
-               (event)-[:HELD_AT]->(venue)
-         WHERE (event.time + event.utc_offset) < timestamp()
-         RETURN g.name, 
-                event.time + event.utc_offset AS eventTime,
-                event.announced_at AS announcedAt, 
-                event.name, 
-                COUNT(*) AS rsvps, 
-                venue.name AS venue, venue.lat AS lat, venue.lon AS lon"
-
-events = cypher(graph, query)
-
-events$eventTime <- timestampToDate(events$eventTime)
-events$time = format(events$eventTime, "%H:%M")
-events$day <- format(events$eventTime, "%A")
-events$monthYear <- format(events$eventTime, "%m-%Y")
-events$month <- format(events$eventTime, "%m")
-events$year <- format(events$eventTime, "%Y")
-events$announcedAt<- timestampToDate(events$announcedAt)
-events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
-
-byVenue = events %>% 
-  count(lat, lon, venue) %>% 
-  ungroup() %>% 
-  arrange(desc(n)) %>% 
-  dplyr::rename(count = n)
-
-map = get_map(location = 'London', zoom = 12)
-ggmap(map) +
-  geom_point(aes(x = lon, y = lat, size = count), 
-             data = byVenue,
-             col = "red",
-             alpha = 0.8)
-
-library(geosphere)
-library(cluster)
 
 byVenue[1,]
 byVenue %>% filter(row_number() == 1)
@@ -154,12 +70,6 @@ distToVenues(byVenue %>% slice(2), byVenue) %>% filter(dist < 100)
 distHaversine(c(51.52482,-0.099109),c(51.52451,-0.099152))
 ?distHaversine
 
-clusteramounts = 40
-distance.matrix = (distm(byVenue[,c("lon","lat")]))
-clustersx <- as.hclust(agnes(distance.matrix, diss = T))
-byVenue$group <- cutree(clustersx, k=clusteramounts)
-byVenue %>% arrange(group) %>% head(50)
-
 
 ?rename
 
@@ -175,14 +85,6 @@ events %>%
   dplyr::summarise(events = n()) %>%
   arrange(desc(events))
 
-
-events %>% 
-  group_by(month) %>%
-  dplyr::summarise(events = n(), 
-                   count = sum(rsvps), 
-                   max = max(rsvps)) %>%
-  mutate(ave = count / events) %>%
-  arrange(desc(ave))
 
 # chart showing how many people attend by month
 
@@ -214,29 +116,3 @@ ggplot(allRSVPs, aes(x = difference, fill=response)) +
 # regression model - simple prediction of attendees based on meetup /day?
 
 # who's at the centre of the London NoSQL meetup scene?
-
-query = "MATCH (p:MeetupProfile)-[:RSVPD]->({response: 'yes'})-[:TO]->(event),
-               (event)<-[:TO]-({response:'yes'})<-[:RSVPD]-(other)
-         WHERE ID(p) < ID(other)
-         RETURN p.name, other.name, COUNT(*) AS times"
-
-data = cypher(graph, query)
-
-data %>% arrange(desc(times)) %>% head(5)
-
-# betweenness centrality
-options("scipen"=100, "digits"=4)
-g = graph.data.frame(data, directed = F)
-
-sort(betweenness(g), decreasing = T)[1:5]
-sort(betweenness.estimate(g, cutoff=2), decreasing = T) %>% head(5)
-
-# page rank
-?page.rank
-pr = page.rank(g)$vector
-prDf = data.frame(name = names(pr), rank = pr)
-head(prDf)
-
-data.frame(prDf) %>%
-  arrange(desc(pr)) %>%
-  head(10)
