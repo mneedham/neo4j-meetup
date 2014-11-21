@@ -10,6 +10,7 @@ library(igraph)
 library(geosphere)
 library(cluster)
 library(gridExtra)
+library(ggmap)
 
 graph = startGraph("http://localhost:7474/db/data/")
 timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")

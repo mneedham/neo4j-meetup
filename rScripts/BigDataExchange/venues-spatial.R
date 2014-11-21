@@ -15,9 +15,9 @@ events = cypher(graph, query)
 
 events$eventTime <- timestampToDate(events$eventTime)
 events$time = format(events$eventTime, "%H:%M")
-events$day <- format(events$eventTime, "%A")
+events$day <- factor(format(events$eventTime, "%A"), levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
 events$monthYear <- format(events$eventTime, "%m-%Y")
-events$month <- format(events$eventTime, "%m")
+events$month <- factor(format(events$eventTime, "%B"), levels = month.name)
 events$year <- format(events$eventTime, "%Y")
 events$announcedAt<- timestampToDate(events$announcedAt)
 events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
@@ -28,10 +28,12 @@ byVenue = events %>%
   arrange(desc(n)) %>% 
   dplyr::rename(count = n)
 
+byVenue %>% head(10)
 
 # map showing where the meetups happen
 map = get_map(location = 'London', zoom = 12)
-ggmap(map) +
+
+m1 = ggmap(map) +
   geom_point(aes(x = lon, y = lat, size = count), 
              data = byVenue,
              col = "red",
@@ -43,4 +45,22 @@ clusteramounts = 40
 distance.matrix = (distm(byVenue[,c("lon","lat")]))
 clustersx <- as.hclust(agnes(distance.matrix, diss = T))
 byVenue$group <- cutree(clustersx, k=clusteramounts)
-byVenue %>% arrange(group) %>% head(50)
+byVenue %>% arrange(group) %>% head(20)
+
+byVenueClustered = byVenue %>% 
+  group_by(group) %>% 
+  summarise(meanLat = mean(lat),
+            meanLon = mean(lon),
+            total = sum(count),
+            venues = paste(venue, collapse = ",")) %>%
+  arrange(desc(total))
+
+
+
+m2 = ggmap(map) +
+  geom_point(aes(x = meanLon, y = meanLat, size = total), 
+             data = byVenueClustered,
+             col = "red",
+             alpha = 0.8)
+
+grid.arrange(m1, m2, ncol = 2)

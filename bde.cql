@@ -22,12 +22,12 @@ FOREACH(i in RANGE(0, length(memberships)-2) |
 
 match (m:MeetupProfile {name: "Mark Needham"})-[:HAS_MEMBERSHIP]->(membership)
 WITH membership LIMIT 1
-MATCH path = (membership)<-[:NEXT*]-(previous)
+MATCH path = (previous)-[:NEXT*]->(membership)
 WHERE NOT (previous)<-[:NEXT]-()
 WITH NODES(path) AS memberships
 UNWIND memberships AS membership
 MATCH (membership)-[:OF_GROUP]->(group)
-RETURN COLLECT(group.name)
+RETURN COLLECT({g: group.name, date: membership.joined})
 
 // what did people join before Neo4j
 
