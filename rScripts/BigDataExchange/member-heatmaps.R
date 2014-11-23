@@ -48,3 +48,17 @@ ggplot(group_overlap_percentage, aes(x=group2.name, y=group1.name, fill=percenta
         axis.title = element_text(size = 14, color = "black"),
         plot.title = element_text(size = 16, color = "black"),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+# How many groups are people part of?
+
+query = "match (p:MeetupProfile)-[:MEMBER_OF]->()
+         return ID(p), COUNT(*) AS groups
+         ORDER BY groups DESC"
+
+group_count = cypher(graph, query)
+
+ggplot(aes(x = groups, y = n), data = group_count %>% count(groups)) + 
+  geom_bar(stat="identity", fill="dark blue") + 
+  scale_y_sqrt() +
+  scale_x_continuous(breaks = round(seq(min(group_count$groups), max(group_count$groups), by = 1),1)) +
+  ggtitle("Number of groups people are members of")

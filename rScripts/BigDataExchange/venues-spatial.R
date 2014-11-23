@@ -42,10 +42,18 @@ m1 = ggmap(map) +
 # cluster the venues so we can aggregate close by venues
 
 clusteramounts = 40
-distance.matrix = (distm(byVenue[,c("lon","lat")]))
-clustersx <- as.hclust(agnes(distance.matrix, diss = T))
+distance.matrix = byVenue %>% select(lon, lat) %>% distm
+clustersx <- agnes(distance.matrix, diss = T) %>% as.hclust
 byVenue$group <- cutree(clustersx, k=clusteramounts)
 byVenue %>% arrange(group) %>% head(20)
+
+# hclust
+d = dist(distance.matrix)
+hc = hclust(d, method = "ward.D")
+byVenue$hclustGroup = cutree(hc, k = 40)
+
+byVenue %>% group_by(group) %>% summarise(events = sum(count)) %>% arrange(desc(events)) %>% head(10)
+byVenue %>% group_by(hclustGroup) %>% summarise(events = sum(count)) %>% arrange(desc(events)) %>% head(10)
 
 byVenueClustered = byVenue %>% 
   group_by(group) %>% 
@@ -53,9 +61,7 @@ byVenueClustered = byVenue %>%
             meanLon = mean(lon),
             total = sum(count),
             venues = paste(venue, collapse = ",")) %>%
-  arrange(desc(total))
-
-
+  arrange(desc(total))   
 
 m2 = ggmap(map) +
   geom_point(aes(x = meanLon, y = meanLat, size = total), 
@@ -64,3 +70,6 @@ m2 = ggmap(map) +
              alpha = 0.8)
 
 grid.arrange(m1, m2, ncol = 2)
+
+# What's going on in Shoreditch?
+byVenue %>% filter(group == byVenueClustered$group[1]) %>% select(-hclustGroup)
