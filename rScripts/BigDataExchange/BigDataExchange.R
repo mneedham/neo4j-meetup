@@ -71,10 +71,6 @@ distHaversine(c(51.52482,-0.099109),c(51.52451,-0.099152))
 ?distHaversine
 
 
-?rename
-
-?select
-
 events %>% 
   group_by(venue) %>%
   dplyr::summarise(events = n()) %>%
