@@ -4,7 +4,6 @@ Members and Groups
 Now we want to find out how the members of different groups overlap.
 
 
-
 ```r
 library(RNeo4j)
 library(dplyr)
@@ -16,6 +15,12 @@ library(ggplot2)
 graph = startGraph("http://localhost:7474/db/data/")
 options(width = 200)
 ```
+
+This time we're only interested in a very specific part of the graph:
+
+<img src="images/overlap.png" width="500" />
+
+In the following query we take every pair of groups and calculate how many common members they have:
 
 
 ```r
@@ -36,17 +41,17 @@ pickRandomRows(group_overlap, 10)
 ```
 
 ```
-##                                         group1.name                                               group2.name commonMembers
-## 1                   Enterprise Search London Meetup                                  Scale Warriors of London             3
-## 2                                   Big Data London                                              Redis London            81
-## 3                                       Hive London                                          Couchbase London            25
-## 4  TokuMX London - Super-charging MongoDB in London                      Equal Experts Technical Meetup Group             1
-## 5                                London Riak Meetup                                             Women in Data             6
-## 6                          OpenCredo Tech Workshops                                              London NoSQL             2
-## 7                         Neo4j - London User Group                                           GridGain London             4
-## 8                Hazelcast User Group London (HUGL)                  Span: scalable and distributed computing             5
-## 9                   London ElasticSearch User Group                                     Hadoop Users Group UK           152
-## 10                   London PostgreSQL Meetup Group London Actionable Behavioral Analytics for Web and Mobile             2
+##                                                  group1.name                                               group2.name commonMembers
+## 1                                           Couchbase London                                               Hive London            25
+## 2                                    The Data Scientist - UK                                       Data Science London           172
+## 3                     Marklogic Financial Services Community                                  Scale Warriors of London             1
+## 4                                   Scale Warriors of London        The London Distributed Graph Database Meetup Group             3
+## 5                   HPC & GPU Supercomputing Group of London                                  Scale Warriors of London             0
+## 6                                  Neo4j - London User Group London Actionable Behavioral Analytics for Web and Mobile            24
+## 7                            London ElasticSearch User Group                                   Big Data Jobs in London            28
+## 8           TokuMX London - Super-charging MongoDB in London                                     Hadoop Users Group UK             5
+## 9                                  London MongoDB User Group                    Marklogic Financial Services Community             6
+## 10 London Actionable Behavioral Analytics for Web and Mobile                  Span: scalable and distributed computing             2
 ```
 
 
@@ -89,17 +94,17 @@ pickRandomRows(group_overlap_percentage)
 ```
 
 ```
-##                                           group1.name                                               group2.name percentage
-## 1                Equal Experts Technical Meetup Group                            London PostgreSQL Meetup Group          2
-## 2  The London Distributed Graph Database Meetup Group                                 Neo4j - London User Group         54
-## 3    TokuMX London - Super-charging MongoDB in London                                               Hive London          0
-## 4       Big Data / Data Science / Data Analytics Jobs London Actionable Behavioral Analytics for Web and Mobile          2
-## 5                      London Cloud Computing / NoSQL                                   Big Data Jobs in London          6
-## 6                     Enterprise Search London Meetup                    Marklogic Financial Services Community          0
-## 7                           London MongoDB User Group             Big Data / Data Science / Data Analytics Jobs          1
-## 8                      London PostgreSQL Meetup Group                                 Neo4j - London User Group         19
-## 9                                        Redis London London Actionable Behavioral Analytics for Web and Mobile          1
-## 10                    Enterprise Search London Meetup        The London Distributed Graph Database Meetup Group          2
+##                                         group1.name                              group2.name percentage
+## 1                           Data Enthusiasts London              Big Data Week London Meetup          4
+## 2                       Big Data Week London Meetup           London PostgreSQL Meetup Group          2
+## 3                                      Redis London                          Big Data London         22
+## 4                   Enterprise Search London Meetup                       London Riak Meetup          2
+## 5  TokuMX London - Super-charging MongoDB in London                              Hive London          0
+## 6            Marklogic Financial Services Community                          GridGain London          0
+## 7                           Big Data Jobs in London              MarkLogic User Group London          2
+## 8                                      Redis London Span: scalable and distributed computing          1
+## 9  TokuMX London - Super-charging MongoDB in London         Oracle Big Data 4 the Enterprise          0
+## 10                                      Hive London                            Women in Data          5
 ```
 
 
@@ -117,6 +122,8 @@ ggplot(group_overlap_percentage, aes(x=group2.name, y=group1.name, fill=percenta
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
 
+## How many groups are people members of?
+
 
 ```r
 query = "match (p:MeetupProfile)-[:MEMBER_OF]->()
@@ -128,17 +135,16 @@ pickRandomRows(group_count)
 ```
 
 ```
-##    ID(p) groups
-## 1  29147      1
-## 2  32364      1
-## 3  42076      1
-## 4  37682      3
-## 5  16651      1
-## 6  21731      3
-## 7  48100      1
-## 8  53938      1
-## 9  11963      1
-## 10  1591      1
+##   ID(p) groups
+## 1    NA     NA
+## 2 42339      2
+## 3 38874      1
+## 4 35897      1
+## 5 23673      1
+## 6   266      1
+## 7 12878      1
+## 8 55134      1
+## 9  9669      9
 ```
 
 
@@ -152,6 +158,9 @@ ggplot(aes(x = groups, y = n), data = group_count %>% count(groups)) +
 
 ![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
 
+It's a typical long tail curve where there's a few people who are interested in lots of different topics but most people are only interested in 1 or 2 things.
+
+We might then look at how many groups people belong to grouped by meetup group:
 
 
 ```r
@@ -187,17 +196,17 @@ pickRandomRows(members_of_other_groups)
 ```
 
 ```
-##                        group.name numberOfOtherGroups numberOfPeople summarisedNumberOfOtherGroups
-## 1                Couchbase London                   4             25                       Up to 5
-## 2         Data Enthusiasts London                  13              5                  More than 10
-## 3                 Big Data London                  11             19                  More than 10
-## 4                Cassandra London                   4            121                       Up to 5
-## 5   Big Data Developers in London                  14              2                  More than 10
-## 6              London Riak Meetup                  15              4                  More than 10
-## 7     Big Data Week London Meetup                   3             14                       Up to 5
-## 8  London Cloud Computing / NoSQL                  20              1                  More than 10
-## 9                Couchbase London                  17              1                  More than 10
-## 10            HBase London Meetup                  13              3                  More than 10
+##                                       group.name numberOfOtherGroups numberOfPeople summarisedNumberOfOtherGroups
+## 1             Hazelcast User Group London (HUGL)                   2             31                       Up to 5
+## 2  Big Data / Data Science / Data Analytics Jobs                   1             12                             1
+## 3                        Big Data Jobs in London                  17              1                  More than 10
+## 4                                    Hive London                  11              7                  More than 10
+## 5                                     MEAN Stack                   2             80                       Up to 5
+## 6               Oracle Big Data 4 the Enterprise                  13              2                  More than 10
+## 7                 London Cloud Computing / NoSQL                   6             16                      Up to 10
+## 8       Span: scalable and distributed computing                   5              7                       Up to 5
+## 9                                     MEAN Stack                   6              6                      Up to 10
+## 10                              Couchbase London                   4             25                       Up to 5
 ```
 
 

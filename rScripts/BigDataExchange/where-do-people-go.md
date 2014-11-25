@@ -23,6 +23,13 @@ graph = startGraph("http://localhost:7474/db/data/")
 options(width = 200)
 ```
 
+This is the part of the graph that we're interested in this time:
+
+<img src="images/where.png" width="500" />
+
+The only change from the previous set of queries is that we're now interested in the `HELD_AT` relationship and the `venue` the meetup is being held at.
+
+
 
 ```r
 query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),

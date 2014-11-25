@@ -16,6 +16,8 @@ options("scipen"=100, "digits"=4)
 
 ### Which of the most influential meetup members are in the Neo4j group?
 
+<img src="images/blended1.png" width="500" />
+
 
 ```r
 query = "MATCH (p:MeetupProfile)
@@ -55,6 +57,8 @@ cypher(graph, query)
 ```
 
 ### Which of the most influential meetup members have attended a Neo4j meetup?
+
+<img src="images/blended2.png" width="500" />
 
 
 ```r

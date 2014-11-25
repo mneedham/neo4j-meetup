@@ -20,7 +20,12 @@ graph = startGraph("http://localhost:7474/db/data/")
 options(width = 200)
 ```
 
+This is the part of the graph that we're interested in:
+
+<img src="images/when.png" width="500" />
+
 Now we'll execute a query to get back the names of events, the date they were hosted and the number of people who RSVP'd 'yes' which we'll be using as a proxy for 'attended':
+
 
 ```{r}
 query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-()

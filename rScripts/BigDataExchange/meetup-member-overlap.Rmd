@@ -3,7 +3,6 @@ Members and Groups
 
 Now we want to find out how the members of different groups overlap.
 
-
 ```{r message=FALSE}
 library(RNeo4j)
 library(dplyr)
@@ -14,6 +13,12 @@ library(ggplot2)
 graph = startGraph("http://localhost:7474/db/data/")
 options(width = 200)
 ```
+
+This time we're only interested in a very specific part of the graph:
+
+<img src="images/overlap.png" width="500" />
+
+In the following query we take every pair of groups and calculate how many common members they have:
 
 ```{r}
 query = "CYPHER 2.2-rule MATCH (group1:Group), (group2:Group)
@@ -79,6 +84,8 @@ ggplot(group_overlap_percentage, aes(x=group2.name, y=group1.name, fill=percenta
         axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
+## How many groups are people members of?
+
 ```{r}
 query = "match (p:MeetupProfile)-[:MEMBER_OF]->()
          return ID(p), COUNT(*) AS groups
@@ -96,6 +103,9 @@ ggplot(aes(x = groups, y = n), data = group_count %>% count(groups)) +
   ggtitle("Number of groups people are members of")
 ```
 
+It's a typical long tail curve where there's a few people who are interested in lots of different topics but most people are only interested in 1 or 2 things.
+
+We might then look at how many groups people belong to grouped by meetup group:
 
 ```{r}
 query = "CYPHER 2.2-rule MATCH (group:Group)

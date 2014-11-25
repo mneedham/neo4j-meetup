@@ -22,7 +22,12 @@ graph = startGraph("http://localhost:7474/db/data/")
 options(width = 200)
 ```
 
+This is the part of the graph that we're interested in:
+
+<img src="images/when.png" width="500" />
+
 Now we'll execute a query to get back the names of events, the date they were hosted and the number of people who RSVP'd 'yes' which we'll be using as a proxy for 'attended':
+
 
 
 ```r
@@ -52,17 +57,17 @@ events %>% select(event.name, g.name, rsvps) %>% arrange(desc(rsvps)) %>% pickRa
 ```
 
 ```
-##                                                        event.name                          g.name rsvps
-## 1                              The Power of Big Data for Business         Big Data Jobs in London    40
-## 2       MarkLogic User Group London: David Gorbet & David Leeming     MarkLogic User Group London    79
-## 3                 Financial Services + Special Guest Aaron Morton                Cassandra London   100
-## 4                                       London MongoDB User Group       London MongoDB User Group     7
-## 5  Women In Data meetup - The Natural Language Processing Edition                   Women in Data    35
-## 6              Redis London - Sentinel Management & Dev Day ideas                    Redis London    23
-## 7          Graph Pub - Spreadsheets are graphs + lightning talks!       Neo4j - London User Group    58
-## 8                               So What Does a Data Scientist do?             Data Science London   105
-## 9         March 2014 Meetup Featuring Bloomberg and Elasticsearch Enterprise Search London Meetup    66
-## 10          Couchbase Lite: NoSQL for mobile and embedded devices                Couchbase London    28
+##                                                  event.name                           g.name rsvps
+## 1                     Retail Goes Mobile: iBeacons - London   London Cloud Computing / NoSQL    16
+## 2              Ian Robinson and Jim Webber's Neo4j Tutorial        Neo4j - London User Group     1
+## 3                           Enterprise Search EUROPE Meetup  Enterprise Search London Meetup    25
+## 4                  London MongoDB User Group 2012 Meetup #3        London MongoDB User Group    49
+## 5                                  Talking Clouds and Grids   London Cloud Computing / NoSQL     3
+## 6  Winter Big Data 4 Enterprise Meetup with Beer and Snacks Oracle Big Data 4 the Enterprise    54
+## 7                                 Midweek MEAN Stack meetup                       MEAN Stack    52
+## 8                   Introduction to Graph Database Modeling        Neo4j - London User Group    23
+## 9               Real-time Analytics using Indexed MapReduce         Scale Warriors of London    22
+## 10    HBase User Group London: Types in HBase & Apache Gora              HBase London Meetup    33
 ```
 
 Now we'll get back to checking which day of the week people go to meetups on:
