@@ -1,0 +1,45 @@
+Querying the blended graph
+========================================================
+
+```{r message=FALSE}
+library(RNeo4j)
+library(dplyr)
+```
+
+```{r}
+graph = startGraph("http://localhost:7474/db/data/")
+options(width = 200)
+options("scipen"=100, "digits"=4)
+```
+
+### Which of the most influential meetup members are in the Neo4j group?
+
+```{r}
+query = "MATCH (p:MeetupProfile)
+         WITH p 
+         ORDER BY p.pageRank DESC
+         LIMIT 20
+         OPTIONAL MATCH member =  (p)-[m:MEMBER_OF]->(g:Group)
+         WHERE g.name = 'Neo4j - London User Group'
+         RETURN p.name, p.id, p.pageRank,  NOT m is null AS isMember
+         ORDER BY p.pageRank DESC"
+
+cypher(graph, query)
+```
+
+### Which of the most influential meetup members have attended a Neo4j meetup?
+
+```{r}
+query = "MATCH (p:MeetupProfile)
+         WITH p 
+         ORDER BY p.pageRank DESC
+         LIMIT 20
+         OPTIONAL MATCH member =  (p)-[m:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
+         WITH p, NOT m is null AS isMember, g
+         OPTIONAL MATCH event= (p)-[:RSVPD]-({response: 'yes'})-[:TO]->()<-[:HOSTED_EVENT]-(g)
+         WITH p,  isMember, COLLECT(event) as events
+         RETURN p.name, p.id, p.pageRank,   isMember, LENGTH(events) AS events
+         ORDER BY p.pageRank DESC"
+
+cypher(graph, query)
+```

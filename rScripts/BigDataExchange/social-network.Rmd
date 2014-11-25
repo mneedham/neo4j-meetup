@@ -1,7 +1,24 @@
+The meetup social network
+========================================================
+
+```{r message=FALSE}
+library(RNeo4j)
+library(dplyr)
+library(igraph)
+```
+
+```{r}
+graph = startGraph("http://localhost:7474/db/data/")
+options(width = 200)
 options("scipen"=100, "digits"=4)
+```
 
-# who's at the centre of London's NoSQL meetup scene
+### Who's at the centre of London's NoSQL meetup scene?
 
+We want to find out who's the most influential person in the London NoSQL meetup scene which we'll calculate based on assuming relationships between a pair of people if they've both attended the same meetup.
+
+
+```{r}
 nodes_query = "MATCH (p:MeetupProfile)-[:RSVPD]->({response: 'yes'})-[:TO]->(event)
                RETURN DISTINCT ID(p) AS id, p.id AS name, p.name AS fullName"
 
@@ -13,47 +30,39 @@ edges_query = "MATCH (p:MeetupProfile)-[:RSVPD]->({response: 'yes'})-[:TO]->(eve
                RETURN ID(p) AS source, ID(other) AS target, COUNT(*) AS weight"
 
 edges = cypher(graph, edges_query)
+```
 
-# betweenness centrality
+### Betweenness Centrality
 
+We can use igraph's `betweenness` function to find out which person has the most shortest paths running through them:
+
+```{r}
 g = graph.data.frame(edges, directed = F, nodes)
 
 bw = betweenness(g)
-bwDf2 = data.frame(id = names(bw), score = bw)
-bwDf2 %>% arrange(desc(score)) %>%  head()
-
-merge(nodes, bwDf2, by.x = "name", by.y = "id") %>% 
-  arrange(desc(score)) %>% 
-  head(5)
-
-
-bwGraph = betweenness.estimate(g, cutoff=2)
-bwDf = data.frame(id = names(bwGraph), score = bwGraph)
-
-bwDf %>% arrange(desc(score)) %>% head()
+bwDf = data.frame(id = names(bw), score = bw)
+bwDf %>% arrange(desc(score)) %>%  head()
 
 merge(nodes, bwDf, by.x = "name", by.y = "id") %>% 
   arrange(desc(score)) %>% 
-  head(5)
+  head(10)
+```
 
-for(i in 1:nrow(bwDf)) {
-  id = bwDf[i, "id"]
-  score = bwDf[i, "score"]    
-  cypher(graph, "MATCH (p:MeetupProfile {id: {id}}) SET p.betweenness = {score}", id = id, score = score)
-}
+Now that  we've got those values let's write them into the graph:
 
+```{r eval=FALSE}
 query = "MATCH (p:MeetupProfile {id: {id}}) SET p.betweenness = {score}"
 
 tx = newTransaction(graph)
 
-for(i in 1:nrow(bwDf2)) {
+for(i in 1:nrow(bwDf)) {
   if(i %% 1000 == 0) {
     commit(tx)
     print(paste("Batch", i / 1000, "committed."))
     tx = newTransaction(graph)
   }
-  id = bwDf2[i, "id"]
-  score = bwDf2[i, "score"]    
+  id = bwDf[i, "id"]
+  score = bwDf[i, "score"]    
   appendCypher(tx,
                query,
                id = id,
@@ -61,15 +70,24 @@ for(i in 1:nrow(bwDf2)) {
 }
 
 commit(tx)
+```
 
-# page rank
+### Page Rank
+
+Calculating page rank is as simple as calling the `page.rank` function:
+
+```{r}
 pr = page.rank(g)$vector
 prDf = data.frame(name = names(pr), rank = pr) %>% arrange(desc(rank))
 
-data.frame(merge(nodes, prDf, by.x = "name", by.y = "name")) %>%
+merge(nodes, prDf, by.x = "name", by.y = "name") %>%
   arrange(desc(rank)) %>%
   head(10)
+```
 
+We can now write the page rank back into the graph for use in future queries.
+
+```{r eval=FALSE}
 query = "MATCH (p:MeetupProfile {id: toInt({id})}) SET p.pageRank = toFloat({score})"
 
 tx = newTransaction(graph)
@@ -89,21 +107,4 @@ for(i in 1:nrow(prDf)) {
 }
 
 commit(tx)
-
-
-# blended
-
-query = "MATCH (p:MeetupProfile)
-         WITH p 
-         ORDER BY p.pageRank DESC
-         LIMIT 20
-         OPTIONAL MATCH member =  (p)-[m:MEMBER_OF]->(g:Group {name: 'Neo4j - London User Group'})
-         WITH p, NOT m is null AS isMember, g
-         OPTIONAL MATCH event= (p)-[:RSVPD]-({response: 'yes'})-[:TO]->()<-[:HOSTED_EVENT]-(g)
-         WITH p,  isMember, COLLECT(event) as events
-         RETURN p.name, p.id, p.pageRank,   isMember, LENGTH(events) AS events
-         ORDER BY p.pageRank DESC"
-
-blended_data = cypher(graph, query)
-
-blended_data 
+```

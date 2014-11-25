@@ -1,0 +1,110 @@
+Where do people go to meetups?
+========================================================
+
+So we already know which days of the week and months of the year people attend meetups but where abouts in London are those meetups being held?
+
+First things first, let's load in the required libraries:
+
+```{r message=FALSE}
+library(RNeo4j)
+library(dplyr)
+library(ggplot2)
+library(ggmap)
+library(grid)
+library(geosphere)
+library(cluster)
+```
+
+
+```{r}
+graph = startGraph("http://localhost:7474/db/data/")
+options(width = 200)
+```
+
+```{r}
+query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+               (event)-[:HELD_AT]->(venue)
+         WHERE (event.time + event.utc_offset) < timestamp()
+         RETURN g.name, 
+                event.time + event.utc_offset AS eventTime,
+                event.announced_at AS announcedAt, 
+                event.name, 
+                COUNT(*) AS rsvps, 
+                venue.name AS venue, venue.lat AS lat, venue.lon AS lon"
+
+events = cypher(graph, query)
+
+byVenue = events %>% 
+  count(lat, lon, venue) %>% 
+  ungroup() %>% 
+  arrange(desc(n)) %>% 
+  rename(count = n)
+
+byVenue %>% head(10)
+```
+
+Skillsmatter is first as you'd probably expect - there are a lot of meetups going on here. Let's have a look what's happening in the rest of London:
+
+```{r fig.width=15, fig.height=10, warning = FALSE, message = FALSE}
+map = get_map(location = 'London', zoom = 12)
+
+ggmap(map) +
+  geom_point(aes(x = lon, y = lat, size = count), 
+             data = byVenue,
+             col = "red",
+             alpha = 0.8) + 
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+Clustering venues
+-------------
+
+```{r}
+clusteramounts = 40
+distance.matrix = byVenue %>% select(lon, lat) %>% distm
+clustersx <- agnes(distance.matrix, diss = T) %>% as.hclust
+byVenue$group <- cutree(clustersx, k=clusteramounts)
+```
+
+
+```{r}
+byVenue %>% group_by(group) %>% summarise(events = sum(count)) %>% arrange(desc(events)) %>% head(10)
+```
+
+
+```{r}
+byVenueClustered = byVenue %>% 
+  group_by(group) %>% 
+  summarise(meanLat = mean(lat),
+            meanLon = mean(lon),
+            total = sum(count)) %>%
+  arrange(desc(total))   
+byVenueClustered %>% head(10)
+```
+
+```{r fig.width=15, fig.height=10, warning = FALSE, message = FALSE}
+ggmap(map) +
+  geom_point(aes(x = meanLon, y = meanLat, size = total), 
+             data = byVenueClustered,
+             col = "red",
+             alpha = 0.8)
+```
+
+### The meetup quadrangle
+
+We can now see 4 big clusters - Skillsmatter as we identified before, one south of the River, one over in Westminster and the biggest cluster over in Shoreditch / Liverpool Street.
+
+First let's grab those groups:
+
+```{r}
+topGroups = (byVenueClustered %>% head(4))$group
+topGroups
+```
+
+
+```{r}
+merge(byVenue, byVenueClustered, by.id = "group") %>% 
+  filter(group %in% topGroups) %>% 
+  select(group, venue, count, total) %>% 
+  arrange(desc(total))
+```

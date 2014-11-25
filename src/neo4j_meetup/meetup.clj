@@ -60,8 +60,7 @@
      )))
 
 (defn group-member-topics [group-id]
-  (let [query "                
-                MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})
+  (let [query "CYPHER 2.2-rule MATCH (m)-[:MEMBER_OF]->(group:Group {id: {groupId}})
 
                 WITH COLLECT(m) AS members, group
                 UNWIND members AS m
