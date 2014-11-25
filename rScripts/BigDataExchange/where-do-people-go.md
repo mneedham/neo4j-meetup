@@ -67,13 +67,7 @@ Skillsmatter is first as you'd probably expect - there are a lot of meetups goin
 
 ```r
 map = get_map(location = 'London', zoom = 12)
-```
 
-```
-## Error in download.file(url, destfile = destfile, quiet = !messaging, mode = "wb"): cannot open URL 'http://maps.googleapis.com/maps/api/staticmap?center=London&zoom=12&size=%20640x640&scale=%202&maptype=terrain&sensor=false'
-```
-
-```r
 ggmap(map) +
   geom_point(aes(x = lon, y = lat, size = count), 
              data = byVenue,
@@ -82,9 +76,7 @@ ggmap(map) +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 ```
 
-```
-## Error in ggmap(map): object 'map' not found
-```
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
 
 Clustering venues
 -------------
@@ -156,13 +148,11 @@ ggmap(map) +
              alpha = 0.8)
 ```
 
-```
-## Error in ggmap(map): object 'map' not found
-```
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
 
 ### The meetup quadrangle
 
-We can now see 4 big clusters - one over in Westminster; Skillsmatter as we identified before but also one over in Shoreditch. 
+We can now see 4 big clusters - Skillsmatter as we identified before, one south of the River, one over in Westminster and the biggest cluster over in Shoreditch / Liverpool Street.
 
 First let's grab those groups:
 
@@ -237,5 +227,3 @@ merge(byVenue, byVenueClustered, by.id = "group") %>%
 ## 48     4                                      Theodore Bullfrog     1    54
 ## 49     4                                                 ONLINE    10    54
 ```
-
-
