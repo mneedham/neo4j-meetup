@@ -1,45 +1,162 @@
 library(RNeo4j)
-library(ggplot2)
 library(dplyr)
 library(car)
+library(geosphere)
 
 graph = startGraph("http://localhost:7478/db/data/")
 
-# all neo events
-query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
-         (event)-[:HELD_AT]->(venue)
-WHERE (event.time + event.utc_offset) < timestamp()
-RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps, venue.name AS venue"
-
-# neo events in the office
-query = "MATCH (g:Group {name: \"Neo4j - London User Group\"})-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
-                           (event)-[:HELD_AT]->(venue)
-                     WHERE (event.time + event.utc_offset) < timestamp() AND venue.name IN [\"Neo Technology\", \"OpenCredo\"]
-                     RETURN event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps"
-
 # london nosql events
 query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
-         (event)-[:HELD_AT]->(venue)
-WHERE (event.time + event.utc_offset) < timestamp()
-RETURN g.name, event.time + event.utc_offset AS eventTime,event.announced_at AS announcedAt, event.name, COUNT(*) AS rsvps, venue.name AS venue"
+               (event)-[:HELD_AT]->(venue)
+         WHERE (event.time + event.utc_offset) < timestamp()
+         RETURN g.name, 
+                event.time + event.utc_offset AS eventTime,
+                event.name, 
+                COUNT(*) AS rsvps, 
+                venue.name AS venue,
+                venue.lat AS lat,
+                venue.lon AS lon"
 
-#events = subset(cypher(graph, query), !is.na(announcedAt))
 events = cypher(graph, query)
+
+events %>% head()
 
 events$eventTime <- timestampToDate(events$eventTime)
 events$time = format(events$eventTime, "%H:%M")
 events$day <- format(events$eventTime, "%A")
 events$monthYear <- format(events$eventTime, "%m-%Y")
-
 events$month <- factor(format(events$eventTime, "%B"), levels = month.name)
 events$year <- format(events$eventTime, "%Y")
-events$announcedAt<- timestampToDate(events$announcedAt)
-#events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
-events$timeDiff = as.numeric(events$eventTime - events$announcedAt, units = "days")
 
-ggplot(aes(x = venue, y = rsvps), data = events) + geom_point()
+centre = c(-0.129581, 51.516578)
+
+events$distanceFromCentre = distHaversine(c(events$lat, events$lon), centre)
+events %>% mutate(distanceFromCentre = distHaversine(c(lat, lon), centre))
 
 write.csv(events, "/tmp/events.csv", row.names = FALSE)
+write.csv(withDistNoOutliers, "/tmp/events.csv", row.names = FALSE)
+
+eventOne = events %>% slice(1)
+distHaversine(c(eventOne$lat, eventOne$lon), centre)
+
+options("scipen"=100, "digits"=4)
+
+withDist = events %>% 
+  mutate(
+    fromCentre = by(events, 1:nrow(events), function(row) { distHaversine(c(row$lon,row$lat),centre)}) %>% 
+      cbind() %>% 
+      as.vector()) 
+
+ggplot(aes(x = fromCentre, y = rsvps), data = withDist) + geom_point()
+withDist %>% arrange(desc(fromCentre)) %>% head()
+
+quantile(withDist$fromCentre)
+sd(withDist$fromCentre)
+
+withDistNoOutliers = withDist %>% filter(fromCentre < quantile(withDist$fromCentre, 0.98))
+closeToCentre = withDist %>% filter(fromCentre < 10000)
+
+ggplot(aes(x = fromCentre, y = rsvps), data = withDistNoOutliers) + geom_point()
+ggplot(aes(x = fromCentre, y = rsvps), data = closeToCentre) + geom_point()
+
+# get member sign up times
+query = "match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group)
+RETURN g.name, membership.joined AS joinTimestamp"
+
+timestampToDate <- function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
+meetupMembers = cypher(graph, query)
+meetupMembers$joinDate <- timestampToDate(meetupMembers$joinTimestamp)
+meetupMembers$dayMonthYear <- as.Date(meetupMembers$joinDate)
+
+cumulativeMeetupMembers = meetupMembers %>% 
+  group_by(g.name, dayMonthYear) %>% 
+  summarise(n = n()) %>% 
+  mutate(n = cumsum(n)) %>% 
+  group_by(g.name) %>%
+  mutate(total = max(n))
+
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = cumulativeMeetupMembers) + geom_line()
+
+write.csv(meetupMembers, "/tmp/meetupMembers.csv")
+
+query = "MATCH (g:Group)<-[:MEMBER_OF]-()
+WITH g, COUNT(*) AS max
+ORDER BY max DESC
+match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group)
+RETURN g.name, membership.joined AS joinTimestamp, max"
+meetupMembers = cypher(graph, query)
+meetupMembers$joinDate <- timestampToDate(meetupMembers$joinTimestamp)
+meetupMembers$dayMonthYear <- as.Date(meetupMembers$joinDate)
+
+cumulativeMeetupMembers = meetupMembers %>% 
+  group_by(g.name, dayMonthYear) %>% 
+  summarise(n = n()) %>%
+  mutate(n = cumsum(n))
+
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), 
+       data = merge(meetupMembers, cumulativeMeetupMembers, by = c("g.name", "dayMonthYear"))) +
+  geom_line()
+
+write.csv(meetupMembers, "/tmp/meetupMembers2.csv")
+
+# Look up member count when the meetup happened
+memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    (meetupMembers %>% 
+       filter(g.name == groupName & dayMonthYear < date) %>% do(tail(., 1)))$n    
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+membersWithGroupCounts= withDistNoOutliers %>%
+  mutate(
+    groupMembers = by(withDistNoOutliers, 1:nrow(withDistNoOutliers), function(row) { 
+        findMemberCount(row$g.name, as.character(row$eventTime))
+      }) %>% 
+      cbind() %>% 
+      as.vector()    
+    )
+
+membersWithGroupCounts %>% arrange(desc(groupMembers)) %>% head()
+
+ggplot(aes(x = groupMembers, y = rsvps), data = membersWithGroupCounts) + geom_point() + geom_smooth(fill = NA)
+ggplot(aes(x = fromCentre, y = rsvps), data = membersWithGroupCounts) + geom_point() + geom_smooth(fill = NA)
+
+fit = lm(rsvps ~ groupMembers, data = membersWithGroupCounts)
+membersWithGroupCounts$predictedRSVPS = predict(fit, membersWithGroupCounts)
+ggplot(aes(x = rsvps, y = predictedRSVPS), data = membersWithGroupCounts) + geom_point() + geom_abline(intercept=0, slope=1)
+
+write.csv(membersWithGroupCounts, "/tmp/membersWithGroupCounts.csv")
+
+top5 = (cumulativeMeetupMembers %>%
+  select(g.name, total) %>%                         # keep only columns of interest
+  ungroup() %>%                              # forget about the grouping
+  distinct() %>%                                 # get distinct rows
+  arrange(desc(total)) %>%                          # order by "total" descending
+  slice(1:5))$g.name# get top 5 rows
+
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = cumulativeMeetupMembers %>% filter(g.name %in% top5)) + geom_line()
+
+cumulativeMeetupMembers %>% select(g.name) %>% distinct()
+
+databases = c("London MongoDB User Group", "Neo4j - London User Group", "London Riak Meetup", "Hadoop Users Group UK", "Cassandra London", "Couchbase London", "London ElasticSearch User Group")
+
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = cumulativeMeetupMembers %>% filter(g.name %in% databases)) + geom_line(size = 1)
+
+filteredCumulativeMeetupMembers = meetupMembers %>%
+  group_by(g.name, dayMonthYear) %>%
+  summarise(n = n()) %>%
+  mutate(n = cumsum(n)) %>%
+  group_by(g.name) %>%
+  mutate(total = max(n)) %>%
+  ungroup() %>%
+  mutate(min.total.of.interest = sort(unique(total), decreasing=T)[5]) %>%
+  filter(total >= min.total.of.interest)
+
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = filteredCumulativeMeetupMembers) + geom_line(size = 1)
+
+?geom_line
 
 
 events = read.csv("/tmp/events.csv")

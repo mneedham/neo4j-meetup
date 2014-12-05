@@ -145,6 +145,9 @@ ggplot(data=members_of_other_groups,
            y = numberOfPeople, 
            fill=members_of_other_groups$summarisedNumberOfOtherGroups)) + 
   geom_bar(stat="identity") +
-  coord_flip() +  ylab("") + xlab("") +
-  guides(fill=guide_legend(title="Number of Groups"))
+  coord_flip() +  
+  ylab("") + 
+  xlab("") +
+  guides(fill=guide_legend(title="Number of Groups")) +
+   scale_fill_manual(values = c("#B2DFEE", "#88ACE0", "#36648B", "#380474" )) 
 ```
