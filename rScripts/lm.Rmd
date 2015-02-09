@@ -1,0 +1,582 @@
+
+
+```{r message=FALSE}
+library(RNeo4j)
+library(dplyr)
+library(car)
+library(geosphere)
+library(ggplot2)
+
+graph = startGraph("http://localhost:7574/db/data/")
+timestampToDate = function(x) as.POSIXct(x / 1000, origin="1970-01-01", tz = "GMT")
+```
+
+```{r}
+# london nosql events
+query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
+               (event)-[:HELD_AT]->(venue)
+         WHERE (event.time + event.utc_offset) < timestamp()
+         WITH g, event, COUNT(*) AS rsvps, venue.name AS venue,venue.lat AS lat,venue.lon AS lon
+         OPTIONAL MATCH (event)-[:HAPPENED_ON]->(day)<-[:HAPPENED_ON]-(other:Event) WHERE other <> event
+  	     OPTIONAL MATCH (other)<-[:TO]-(:RSVP {response: 'yes'})<-[:RSVPD]-(:MeetupProfile)
+         WITH g, event, rsvps, venue, lat, lon, COLLECT(DISTINCT other) AS otherEvents, COLLECT(other) AS otherEventsPeople
+         RETURN g.name, event.id,
+                event.time + event.utc_offset AS eventTime,
+                event.name, 
+                rsvps, 
+                venue,
+                lat,
+                lon, 
+                LENGTH(otherEvents) AS numberOfOtherEvents,
+                LENGTH(otherEventsPeople) AS numberOfPeopleGoingToOtherEvents
+         ORDER BY rsvps DESC"
+
+events = cypher(graph, query)
+events$eventTime <- timestampToDate(events$eventTime)
+events$time = format(events$eventTime, "%H:%M")
+events$day <- format(events$eventTime, "%A")
+events$dayOfMonth <- as.numeric(format(events$eventTime, "%d"))
+events$monthYear <- format(events$eventTime, "%m-%Y")
+events$month <- factor(format(events$eventTime, "%B"), levels = month.name)
+events$year <- format(events$eventTime, "%Y")
+events %>% head()
+```
+
+
+## Is the RSVP data normally distributed?
+
+```{r}
+shapiro.test(events$rsvps)
+ggplot(aes(x = rsvps), data = events) + geom_histogram(binwidth = 10)
+ggplot(aes(x = log(rsvps)), data = events) + geom_histogram(binwidth = 1)
+```
+
+```{r}
+query = "MATCH (g:Group)<-[:MEMBER_OF]-()
+WITH g, COUNT(*) AS max
+ORDER BY max DESC
+match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group)
+RETURN g.name, membership.joined AS joinTimestamp, max"
+meetupMembers = cypher(graph, query)
+meetupMembers$joinDate <- timestampToDate(meetupMembers$joinTimestamp)
+meetupMembers$dayMonthYear <- as.Date(meetupMembers$joinDate)
+
+cumulativeMeetupMembers = meetupMembers %>% 
+  group_by(g.name, dayMonthYear) %>% 
+  summarise(n = n()) %>%
+  mutate(n = cumsum(n))
+
+write.csv(cumulativeMeetupMembers, "/tmp/cumulativeMeetupMembers.csv", row.names = FALSE)
+
+memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    (meetupMembers %>% 
+       filter(g.name == groupName & dayMonthYear < date) %>% do(tail(., 1)))$n    
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+membersWithGroupCounts= events %>%
+  mutate(
+    groupMembers = by(events, 1:nrow(events), function(row) { 
+        findMemberCount(row$g.name, as.character(row$eventTime))
+      }) %>% 
+      cbind() %>% 
+      as.vector()    
+    )
+
+membersWithGroupCounts %>% 
+  filter(g.name == "Neo4j - London User Group") %>% 
+  arrange(eventTime) %>%
+  select(rsvps, groupMembers, month, year) %>%
+  sample_n(10)
+
+write.csv(membersWithGroupCounts, "/tmp/membersWithGroupCounts.csv")
+
+ggplot(aes(x = groupMembers, y = rsvps), data = membersWithGroupCounts) + 
+  geom_point()
+
+with(membersWithGroupCounts, cor(rsvps, groupMembers))
+```
+
+```{r}
+plotPredictedActual = function(data, x = "predictedRSVPs", y = "rsvps") {
+  ggplot(aes_string(x = x, y = y), data = data) + 
+  geom_point() + 
+  geom_abline(intercept=0, slope=1)
+}
+
+rmse = function(y, h) {
+  return(sqrt(mean((y - h) ^ 2)))
+}
+```
+
+### level/level
+
+```{r}
+fit = lm(rsvps ~ groupMembers, data = membersWithGroupCounts)
+summary(fit)
+
+membersWithGroupCounts$predictedRSVPs = predict(fit, membersWithGroupCounts)
+with(membersWithGroupCounts, cor(rsvps, predictedRSVPs))
+
+plotPredictedActual(membersWithGroupCounts, "predictedRSVPs", "rsvps")
+
+ggplot(aes(x = groupMembers, y = rsvps), data = membersWithGroupCounts) +
+  geom_point() +
+  geom_abline(intercept = fit$coef[1], slope = fit$coef[2])
+
+membersWithGroupCounts %>% select(rsvps, predictedRSVPs)
+```
+
+### add in hours of day
+
+```{r}
+membersWithGroupCounts$hoursIntoDay = as.numeric(membersWithGroupCounts$eventTime - trunc(membersWithGroupCounts$eventTime, "day"), units="hours")
+
+with(membersWithGroupCounts, cor(hoursIntoDay, rsvps))
+
+ggplot(aes(x = hoursIntoDay, y = rsvps), data = membersWithGroupCounts) + geom_point()
+
+summary(lm(rsvps ~ hoursIntoDay * groupMembers, data = membersWithGroupCounts))
+summary(lm(rsvps ~ hoursIntoDay + groupMembers, data = membersWithGroupCounts))
+
+fit = lm(rsvps ~ hoursIntoDay + groupMembers, data = membersWithGroupCounts)
+summary(fit)
+
+membersWithGroupCounts$predictedRSVPs = predict(fit, membersWithGroupCounts)
+with(membersWithGroupCounts, cor(rsvps, predictedRSVPs))
+
+plotPredictedActual(membersWithGroupCounts, "predictedRSVPs", "rsvps")
+fit$coef
+
+membersWithGroupCounts$residuals = membersWithGroupCounts$predictedRSVPs - membersWithGroupCounts$rsvps
+ggplot(aes(x = predictedRSVPs, y = residuals), data = membersWithGroupCounts) + geom_point()
+```
+
+
+### log rsvps
+
+```{r}
+with(membersWithGroupCounts, cor(hoursIntoDay, log(rsvps)))
+ggplot(aes(x = hoursIntoDay, y = log(rsvps)), data = membersWithGroupCounts) + geom_point()
+
+summary(lm(log(rsvps) ~ hoursIntoDay * groupMembers, data = membersWithGroupCounts))
+summary(lm(log(rsvps) ~ hoursIntoDay + groupMembers, data = membersWithGroupCounts))
+
+fit = lm(log(rsvps) ~ hoursIntoDay + groupMembers, data = membersWithGroupCounts)
+summary(fit)
+
+membersWithGroupCounts$logRSVPs = log(membersWithGroupCounts$rsvps)
+membersWithGroupCounts$predictedLogRSVPs = predict(fit, membersWithGroupCounts)
+with(membersWithGroupCounts, cor(logRSVPs, predictedLogRSVPs))
+
+plotPredictedActual(membersWithGroupCounts, "predictedLogRSVPs", "logRSVPs")
+fit$coef
+
+membersWithGroupCounts$residuals = membersWithGroupCounts$predictedLogRSVPs - membersWithGroupCounts$logRSVPs
+ggplot(aes(x = predictedLogRSVPs, y = residuals), data = membersWithGroupCounts) + geom_point()
+
+df = merge(c(1700), c(22.0, 21.0, 19.0, 18.5, 17.0), all = TRUE)
+names(df) = c("groupMembers", "hoursIntoDay")
+df$predictedRSVPs = predict(fit, df) %>% exp()
+df
+```
+
+### with venue
+
+```{r}
+centre = c(-0.129581, 51.516578)
+membersWithGroupCounts = membersWithGroupCounts %>% mutate(distanceFromCentre = distHaversine(cbind(lon, lat), centre))
+
+membersWithGroupCounts = membersWithGroupCounts %>% filter(distanceFromCentre < quantile(membersWithGroupCounts$distanceFromCentre, 0.98))
+
+with(membersWithGroupCounts, cor(distanceFromCentre, log(rsvps)))
+with(membersWithGroupCounts, cor(distanceFromCentre, rsvps))
+ggplot(aes(x = distanceFromCentre, y = log(rsvps)), data = membersWithGroupCounts) + geom_point()
+
+
+summary(lm(log(rsvps) ~ hoursIntoDay + groupMembers + distanceFromCentre, data = membersWithGroupCounts))
+summary(lm(log(rsvps) ~ hoursIntoDay + groupMembers, data = membersWithGroupCounts))
+
+```
+
+### level/log
+
+```{r}
+fit = lm(log(rsvps) ~ groupMembers, data = membersWithGroupCounts)
+summary(fit)
+
+membersWithGroupCounts$predictedRSVPs = exp(predict(fit, membersWithGroupCounts))
+with(membersWithGroupCounts, cor(rsvps, predictedRSVPs))
+
+plotPredictedActual(membersWithGroupCounts, "predictedRSVPs", "rsvps")
+
+membersWithGroupCounts$residuals = membersWithGroupCounts$predictedRSVPs - membersWithGroupCounts$rsvps
+
+ggplot(aes(x = predictedRSVPs, y = residuals), data = membersWithGroupCounts) + geom_point()
+```
+
+### log/log
+
+```{r}
+fitExp = lm(log(rsvps) ~ log(groupMembers), data = membersWithGroupCounts)
+membersWithGroupCounts$logRsvps = log(membersWithGroupCounts$rsvps)
+membersWithGroupCounts$logGroupMembers = log(membersWithGroupCounts$groupMembers)
+summary(fit)
+
+membersWithGroupCounts$predictedLogRSVPs = predict(fit, membersWithGroupCounts)
+with(membersWithGroupCounts, cor(log(rsvps), predictedLogRSVPs))
+plotPredictedActual(membersWithGroupCounts, "predictedLogRSVPs", "logRsvps")
+
+ggplot(aes(x = logGroupMembers, y = logRsvps), data = membersWithGroupCounts) +
+  geom_point() +
+  geom_abline(intercept = fit$coef[1], slope = fit$coef[2])
+
+# exp(predict(fitExp, data.frame(groupMembers = c(1000))))
+```
+
+```{r}
+membersWithGroupCounts$logRsvps = log(membersWithGroupCounts$rsvps)
+membersWithGroupCounts$logGroupMembers = log(membersWithGroupCounts$groupMembers)
+
+membersWithGroupCounts = membersWithGroupCounts %>% filter(logRsvps > 0)
+
+fitExp = lm(logRsvps ~ logGroupMembers, data = membersWithGroupCounts)
+summary(fitExp)
+
+membersWithGroupCounts$predictedLogRSVPs = predict(fitExp, membersWithGroupCounts)
+with(membersWithGroupCounts, cor(logRsvps, predictedLogRSVPs))
+plotPredictedActual(membersWithGroupCounts, "predictedLogRSVPs", "logRsvps")
+
+ggplot(aes(x = logGroupMembers, y = logRsvps), data = membersWithGroupCounts) +
+  geom_point() +
+  geom_abline(intercept = fitExp$coef[1], slope = fit$coef[2])
+
+exp(predict(fitExp, data.frame(logGroupMembers = log(c(1000, 3000)))))
+```
+
+```{r}
+fit = lm(rsvps ~ groupMembers + month, data = membersWithGroupCounts)
+membersWithGroupCounts$predictedRSVPs = predict(fit, membersWithGroupCounts)
+plotPredictedActual(membersWithGroupCounts)
+```
+
+```{r}
+fit = lm(rsvps ~ groupMembers + day + month, data = membersWithGroupCounts)
+summary(fit)
+membersWithGroupCounts$predictedRSVPs = predict(fit, membersWithGroupCounts)
+plotPredictedActual(membersWithGroupCounts)
+```
+
+```{r}
+fit = lm(rsvps ~ groupMembers + time, data = membersWithGroupCounts)
+summary(fit)
+membersWithGroupCounts$predictedRSVPs = predict(fit, membersWithGroupCounts)
+plotPredictedActual(membersWithGroupCounts)
+
+cor(membersWithGroupCounts$rsvps, membersWithGroupCounts$predictedRSVPs)
+
+plot(fit)
+```
+
+### Correlation between time and number of RSVPs
+
+```{r}
+library(polycor)
+membersWithGroupCounts$time = as.factor(membersWithGroupCounts$time)
+hetcor(membersWithGroupCounts %>% select(time, rsvps))
+hetcor(membersWithGroupCounts %>% select(groupMembers, rsvps))
+
+with(membersWithGroupCounts, cor(time, rsvps))
+```
+
+### Linear Regression Model vs Regression Tree
+
+```{r}
+write.csv(membersWithGroupCounts, "/tmp/membersWithGroupCounts.csv")
+membersWithGroupCounts = read.csv("/tmp/membersWithGroupCounts.csv")
+
+library(gridExtra)
+
+
+model1 = lm(rsvps ~ groupMembers + time + month + day, data = membersWithGroupCounts)
+membersWithGroupCounts$pred1 = predict(model1, membersWithGroupCounts)
+model1Plot = plotPredictedActual(membersWithGroupCounts, "pred1")
+cor(membersWithGroupCounts$rsvps, membersWithGroupCounts$pred1)
+
+model2 = ctree(rsvps ~ groupMembers + factor(time) + factor(month) + factor(day),  
+               data = membersWithGroupCounts)
+membersWithGroupCounts$pred2 = predict(model2, membersWithGroupCounts)
+cor(membersWithGroupCounts$rsvps, membersWithGroupCounts$pred2)
+model2Plot = plotPredictedActual(membersWithGroupCounts, "pred2")
+
+grid.arrange(model1Plot,model2Plot, ncol = 1)
+
+membersWithGroupCounts %>% select(g.name, day, month, time, groupMembers, rsvps, pred2) %>% filter(pred2 > 79 & pred2 < 85) %>% sample_n(20)
+```
+
+### Plotting residuals
+
+```{r}
+membersWithGroupCounts$residuals = membersWithGroupCounts$rsvps - membersWithGroupCounts$pred2
+ggplot(aes(x = rsvps, y = residuals), data = membersWithGroupCounts) + geom_point()
+ggplot(aes(x = pred2, y = residuals), data = membersWithGroupCounts) + geom_point()
+
+membersWithGroupCounts$standardized = membersWithGroupCounts$residuals / sd(membersWithGroupCounts$residuals)
+ggplot(aes(x = rsvps , y = standardized), data = membersWithGroupCounts) + geom_point()
+ggplot(aes(x = pred2 , y = standardized), data = membersWithGroupCounts) + geom_point()
+```
+
+#### Are the random errors normally distributed?
+
+```{r}
+normal= ggplot(aes(x = residuals), data = membersWithGroupCounts) + geom_histogram(binwidth=5)
+
+#qqnorm(membersWithGroupCounts$residuals)
+#qqline(membersWithGroupCounts$residuals)
+
+qqplot.data <- function (vec) # argument: vector of numbers
+{
+  # following four lines from base R's qqline()
+  y <- quantile(vec[!is.na(vec)], c(0.25, 0.75))
+  x <- qnorm(c(0.25, 0.75))
+  slope <- diff(y)/diff(x)
+  int <- y[1L] - slope * x[1L]
+
+  d <- data.frame(resids = vec)
+
+  ggplot(d, aes(sample = resids)) + stat_qq() + geom_abline(slope = slope, intercept = int)
+
+}
+
+normal = qqplot.data(membersWithGroupCounts$residuals)
+variation = ggplot(aes(x = pred2 , y = standardized), data = membersWithGroupCounts) + geom_point()
+
+time = ggplot(aes(x = time, y = rsvps), data = membersWithGroupCounts) + geom_point()
+month = ggplot(aes(x = month, y = rsvps), data = membersWithGroupCounts) + geom_point()
+day = ggplot(aes(x = day, y = rsvps), data = membersWithGroupCounts) + geom_point()
+
+grid.arrange(normal, variation, time, month, day, ncol = 2)
+```
+
+### Looking at plots of variables against RSVPs
+
+```{r}
+library(car)
+crPlot(model1, "time")
+crPlots(model1)
+plot(model1)
+
+lm.influence(model1)$hat
+```
+
+### New model where we use just the hour of the day
+
+```{r}
+events = events %>% mutate(hour = as.numeric(format(eventTime, "%H")))
+events %>% head()
+
+deriveMembersWithGroupCounts = function(events) {
+  events %>%
+  mutate(
+    groupMembers = by(events, 1:nrow(events), function(row) { 
+        findMemberCount(row$g.name, as.character(row$eventTime))
+      }) %>% 
+      cbind() %>% 
+      as.vector()    
+    )
+}
+
+deriveMembersWithGroupCounts2 = function(events) {
+  events %>%
+    mutate(ind = row_number()) %>%
+    group_by(ind) %>%
+    mutate(groupMembers = findMemberCount(g.name, as.character(eventTime)))
+}
+
+membersWithGroupCounts = deriveMembersWithGroupCounts(events)
+
+system.time(findMemberCount("Big Data London", "2013-02-20 18:30:00"))
+
+system.time(deriveMembersWithGroupCounts(events))
+system.time(deriveMembersWithGroupCounts2(events))
+
+model3 = lm(rsvps ~ groupMembers + hour + month + day, data = membersWithGroupCounts)
+membersWithGroupCounts$pred3 = predict(model3, membersWithGroupCounts)
+cor(membersWithGroupCounts$rsvps, membersWithGroupCounts$pred3)
+model3Plot = plotPredictedActual(membersWithGroupCounts, "pred3")
+
+membersWithGroupCounts$residuals = membersWithGroupCounts$rsvps - membersWithGroupCounts$pred3
+ggplot(aes(x = pred3, y = residuals), data = membersWithGroupCounts) + geom_point()
+
+summary(model3)
+plot(model3)
+
+model4 = ctree(rsvps ~ groupMembers + hour + factor(month) + factor(day),  
+               data = membersWithGroupCounts)
+
+membersWithGroupCounts$pred4 = predict(model4, membersWithGroupCounts)
+cor(membersWithGroupCounts$rsvps, membersWithGroupCounts$pred4)
+model4Plot = plotPredictedActual(membersWithGroupCounts, "pred4")
+
+membersWithGroupCounts$residuals = membersWithGroupCounts$rsvps - membersWithGroupCounts$pred4
+ggplot(aes(x = pred4, y = residuals), data = membersWithGroupCounts) + geom_point()
+
+plot(model4)
+
+
+summary(model1)
+summary(model3)
+```
+
+
+### Number of other events happening on that day
+
+```{r}
+numberOfEventsModel = lm(rsvps ~ numberOfOtherEvents, data = events)
+events$pred5 = predict(numberOfEventsModel, events)
+
+cor(events$rsvps, events$pred5)
+ggplot(aes(x = pred5, y = rsvps), data = events) + geom_point()
+
+summary(numberOfEventsModel)
+```
+
+### Day of month
+
+```{r}
+dayOfMonthModel = lm(rsvps ~ dayOfMonth, data = events)
+events$pred6 = predict(dayOfMonthModel, events)
+
+cor(events$rsvps, events$pred6)
+ggplot(aes(x = pred6, y = rsvps), data = events) + geom_point()
+
+summary(dayOfMonthModel)
+
+dayOfMonthModel2 = ctree(rsvps ~ dayOfMonth), data = events)
+events$pred7 = predict(dayOfMonthModel2, events)
+cor(events$rsvps, events$pred7)
+```
+
+### Number of days/hours (i.e. meetup lag) since last meetup?
+### Meetups in the two weeks around this event for that group
+### Other meetups that week
+### How many people came to the previous meetup?
+
+
+```{r}
+write.csv(membersWithGroupCounts %>% select(-c(logRSVPS, logRSVPs, logRsvps, predictedRSVPs, predictedLogRSVPs, residuals, logGroupMembers)) , "/tmp/membersWithGroupCounts.csv", row.names = FALSE)
+
+df = read.csv("/tmp/membersWithGroupCounts.csv")
+df$eventTime = as.POSIXct(df$eventTime)
+df %>% sample_n(10) %>% select(event.name, g.name, eventTime, groupMembers, rsvps)
+
+ggplot(aes(x = groupMembers, y = rsvps), data = df) + 
+  geom_point()
+
+fit = lm(rsvps ~ groupMembers, data = df)
+fit$coef
+
+df$predictedRSVPs = predict(fit, df)
+with(df, cor(rsvps, predictedRSVPs))
+
+df$hoursIntoDay = as.numeric(df$eventTime - trunc(df$eventTime, "day"), units="hours")
+ggplot(aes(x = hoursIntoDay, y = rsvps), data = df) + 
+  geom_point()
+
+fit = lm(rsvps ~ hoursIntoDay, data = df)
+fit$coef
+
+df$predictedRSVPs = predict(fit, df)
+with(df, cor(rsvps, predictedRSVPs))
+
+fit = lm(rsvps ~ hoursIntoDay + groupMembers, data = df)
+summary(fit)
+fit$coef
+
+df$predictedRSVPs = predict(fit, df)
+with(df, cor(rsvps, predictedRSVPs))
+
+fit = lm(rsvps ~ hoursIntoDay * groupMembers, data = df)
+summary(fit)
+fit$coef
+
+df$predictedRSVPs = predict(fit, df)
+with(df, cor(rsvps, predictedRSVPs))
+
+ggplot(aes(x = distanceFromCentre, y = rsvps), data = df) + 
+  geom_point()
+
+fit = lm(rsvps ~ distanceFromCentre), data = df)
+fit$coef
+
+df$predictedRSVPs = predict(fit, df)
+with(df, cor(rsvps, predictedRSVPs))
+
+```
+
+
+```{r}
+df$residuals = fit$residuals
+ggplot(aes(x = predictedRSVPs, y = residuals), data = df) + geom_point()
+
+ggplot(df, aes(x = residuals)) + geom_density()
+```
+
+### Lag
+
+```{r}
+df = df %>% arrange(g.name, eventTime)
+dfWithTimeSinceLastEvent = df %>% 
+  group_by(g.name) %>% 
+  mutate(previousEventTime = lag(eventTime), previousRSVPs = lag(rsvps)) %>% 
+  mutate(timeSinceLastEvent = as.numeric(eventTime - previousEventTime, unit="days")) %>%
+  filter(!is.na(timeSinceLastEvent))
+
+ggplot(aes(y = rsvps, x = timeSinceLastEvent), data = dfWithTimeSinceLastEvent) + 
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10()
+
+ggplot(aes(y = log(rsvps), x = log(timeSinceLastEvent)), data = dfWithTimeSinceLastEvent) + 
+  geom_point()
+
+with(dfWithTimeSinceLastEvent, cor(log(rsvps), log(timeSinceLastEvent)))
+
+lm(log(rsvps) ~ log(groupMembers) + log(timeSinceLastEvent) + log(hoursIntoDay), data = dfWithTimeSinceLastEvent) %>% 
+  summary()
+
+fit = lm(log(rsvps) ~ groupMembers + timeSinceLastEvent + hoursIntoDay, data = dfWithTimeSinceLastEvent)
+fit$coef
+
+dfWithTimeSinceLastEvent$predictedRSVPs = exp(predict(fit, dfWithTimeSinceLastEvent))
+dfWithTimeSinceLastEvent$residuals = fit$residuals
+
+with(dfWithTimeSinceLastEvent, cor(rsvps, predictedRSVPs))
+
+ggplot(aes(x = predictedRSVPs, y = residuals), data = dfWithTimeSinceLastEvent) + geom_point()
+
+with(dfWithTimeSinceLastEvent, cor(rsvps, previousRSVPs))
+
+fit = lm(rsvps ~ previousRSVPs, data = dfWithTimeSinceLastEvent)
+summary(fit)
+
+dfWithTimeSinceLastEvent$predictedRSVPs = predict(fit, dfWithTimeSinceLastEvent)
+dfWithTimeSinceLastEvent$residuals = fit$residuals
+with(dfWithTimeSinceLastEvent, cor(rsvps, previousRSVPs))
+
+ggplot(aes(x = predictedRSVPs, y = residuals), data = dfWithTimeSinceLastEvent) + geom_point()
+
+lm(rsvps ~ previousRSVPs + groupMembers + hoursIntoDay, data = dfWithTimeSinceLastEvent) %>% summary()
+lm(rsvps ~ previousRSVPs + groupMembers + hoursIntoDay, data = dfWithTimeSinceLastEvent) %>% summary()
+fit = lm(rsvps ~ previousRSVPs + groupMembers + hoursIntoDay, data = dfWithTimeSinceLastEvent)
+
+fit$coef
+
+newdata = data.frame(previousRSVPs = c(58, 220), groupMembers = c(1747, 3500), hoursIntoDay = c(18.5, 19))
+predict(fit, newdata, interval="confidence")
+
+
+```

@@ -1,0 +1,192 @@
+### Regression tree of rsvps ~ time
+
+```{r}
+timeModel = ctree(rsvps ~ factor(time),  data = events)
+plot(timeModel)
+
+events$pred1 = predict(timeModel, events)
+cor(events$pred1, events$rsvps)
+
+events$residuals = events$rsvps - events$pred1
+ggplot(aes(x = pred1, y = residuals), data = events) + geom_point()
+
+events %>% count(pred1)
+```
+
+
+
+### Time of Day
+```{r}
+timeOfDay = function(hourOfDay) {
+  if(hourOfDay >= 0 && hourOfDay < 12) {
+    "Morning"
+  } else if(hourOfDay >=12 && hourOfDay < 17) {
+    "Afternoon"
+  } else {
+    "Evening"
+  }
+}
+
+events = events %>% mutate(ind = row_number()) %>% group_by(ind) %>% mutate(timeOfDay = timeOfDay(hour))
+
+timeOfDayModel = ctree(rsvps ~ factor(timeOfDay),  data = events)
+plot(timeOfDayModel)
+
+events$pred2 = predict(timeOfDayModel, events)
+cor(events$pred2, events$rsvps)
+
+events$residuals2 = events$rsvps - events$pred2
+ggplot(aes(x = pred2, y = residuals2), data = events) + geom_point()
+events %>% count(pred2)
+```
+
+### Distance from the weekend
+
+```{r}
+events %>% head()
+
+library(lubridate)
+
+closestWeekendDay = function(dates, dateToLookup) {
+  (dates %>% filter(dateToLookup > date) %>% do(tail(., 1)))$date
+} 
+
+findClosestWeekendDay = function() {
+  dates = data.frame(date = seq( dmy("01-01-2010"), to=dmy("01-01-2015"), by="day" ))
+  dates = dates %>% filter(lubridate::wday(date, label = TRUE, abbr = FALSE) %in% c("Saturday", "Sunday"))
+  function(date) {    
+    closestWeekendDay(dates, date)
+  }
+}
+
+foo2 = findClosestWeekendDay()
+
+findClosestWeekendDay2 = function(date) {
+  dates = tbl_df(data.frame(date = seq( dmy("01-01-2010"), to=dmy("01-01-2015"), by="day" )))
+  dates = dates %>% filter(wday(date, label = TRUE, abbr = FALSE) %in% c("Saturday", "Sunday"))
+  closestWeekendDay(dates, date)
+}
+
+library(data.table)
+
+dates = data.table(date = seq( dmy("01-01-2010"), to=dmy("01-01-2015"), by="day" ))
+
+dates = dates %>% filter(lubridate::wday(date, label = TRUE, abbr = FALSE) %in% c("Saturday", "Sunday"))
+
+dates = dates %>% filter(lubridate::wday(date, label = TRUE, abbr = FALSE) %in% c("Saturday", "Sunday"))
+
+findClosestWeekendDayDT = function() {
+  dates = data.table(date = seq( dmy("01-01-2010"), to=dmy("01-01-2015"), by="day" ))
+  setkey(dates, date)
+  dates = dates[wday(date) %in% c(6,7)]
+  function(date) {        
+    (dates[d > date][, .SD[c(.N)]])$date
+  }
+}
+
+findClosestWeekendDayDTIDate = function() {
+  dates = data.table(date = as.IDate(seq( dmy("01-01-2010"), to=dmy("01-01-2015"), by="day" )))
+  setkey(dates, date)
+  dates = dates[wday(date) %in% c(6,7)]
+  function(date) {        
+    (dates[as.IDate(d) > date][, .SD[c(.N)]])$date
+  }
+}
+
+foo = findClosestWeekendDayDT()
+foo3 = findClosestWeekendDayDTIDate()
+
+d = dmy("01-01-2011")
+
+endOfDay = function(date)  {
+  date + hours(23) + minutes(59) + seconds(59)
+}
+
+timeSinceWeekend = function(closestWeekendDay, date) {
+  time = as.numeric(date - endOfDay(closestWeekendDay), units="days")
+  if(time < 0) {
+    0
+  } else {
+    time
+  }
+}
+
+eventTime = events %>% head()
+timeSinceWeekend(findClosestWeekendDay(with_tz(eventTime, "UTC")), eventTime)
+
+events = events %>% 
+  mutate(daysSinceWeekend = timeSinceWeekend(findClosestWeekendDay(with_tz(eventTime, "UTC")), eventTime))
+
+system.time(events %>% 
+  mutate(daysSinceWeekend = timeSinceWeekend(foo2(with_tz(eventTime, "UTC")), eventTime)))
+
+system.time(events %>% 
+  mutate(daysSinceWeekend = timeSinceWeekend(findClosestWeekendDay2(with_tz(eventTime, "UTC")), eventTime)))
+
+system.time(events %>% 
+  mutate(daysSinceWeekend = timeSinceWeekend(foo(with_tz(eventTime, "UTC")), eventTime)))
+
+system.time(events %>% 
+  mutate(daysSinceWeekend = timeSinceWeekend(foo3(with_tz(eventTime, "UTC")), eventTime)))
+
+
+summary(events$daysSinceWeekend)
+
+events$hoursSinceWeekend = as.numeric(events$daysSinceWeekend, units = "days")
+
+cor(events$daysSinceWeekend, events$rsvps)
+ggplot(aes(x = daysSinceWeekend, y = rsvps), data = events) + geom_point()
+
+events %>% filter(hoursSinceWeekend < 0)
+```
+
+```{r}
+today = dmy_hms("08-12-2014 18:00:00")
+
+distanceToWeekend = function(today) {
+   dates = data.frame(date = seq( today - days(5), to=today + days(5), by="day" )) %>% 
+    filter(wday(date) %in% c(6,7)) %>%
+    mutate(date = update(date, hour = 0, minute = 0, second = 0), ind = row_number()) %>%
+    group_by(ind) %>%
+    mutate(dist = 
+             if(wday(today) %in% c(6,7)) {
+               0
+             } else if(today > date) { 
+               as.numeric(today - update(date, hour = 23, minute = 59, second = 59), units="hours")
+             } else { 
+               as.numeric(update(date, hour = 0, minute = 0, second = 0) - today, units="hours")
+             }) %>%
+    ungroup() %>%
+    arrange(abs(dist))
+  (dates %>% head(1))$dist
+}
+
+events = events %>% group_by(ind) %>%
+  mutate(distance = distanceToWeekend(eventTime))
+
+events$distance
+events$distanceSquared = events$distance ** 2
+
+
+cor(events$distance, events$rsvps)
+distanceModel = lm(rsvps ~ distance, events)
+summary(distanceModel)
+summary(events$distance)
+
+
+events$predDistance = predict(distanceModel, events)
+cor(events$predDistance, events$rsvps)
+ggplot(aes(x = predDistance, y = rsvps), data = events) + geom_point()
+
+events$residualsDistance = events$predDistance - events$rsvps
+ggplot(aes(x = predDistance, y = residualsDistance), data = events) + geom_point()
+
+ggplot(aes(x = distance, y = rsvps), data = events) + geom_point()
+ggplot(aes(x = distanceSquared, y = rsvps), data = events) + geom_point()
+
+fit = lm(rsvps ~ dayOfMonth * venue, events)
+summary(fit)
+
+events %>% head()
+
+```

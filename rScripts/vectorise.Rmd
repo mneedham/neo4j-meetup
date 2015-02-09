@@ -1,0 +1,218 @@
+# Vectorise all the things
+
+## Distance from the weekend
+
+```{r message=FALSE}
+library(dplyr)
+library(lubridate)
+library(geosphere)
+options("scipen"=100, "digits"=4)
+```
+
+```{r}
+times = ymd_hms("2002-01-01 17:00:00") + c(0:99) * hours(1)
+data = data.frame(time = times)
+data %>% head()
+```
+
+We want to find out how many hours away from the weekend they are.
+
+### Non vectorised version
+
+
+```{r}
+distanceFromWeekend = function(dateToLookup) {
+  before = floor_date(dateToLookup, "week") + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, "week") - days(1)
+  timeToBefore = dateToLookup - before
+  timeToAfter = after - dateToLookup
+  
+  if(timeToBefore < 0 || timeToAfter < 0) {
+    0  
+  } else {
+    if(timeToBefore < timeToAfter) {
+      timeToBefore / dhours(1)
+    } else {
+      timeToAfter / dhours(1)
+    }
+  }
+}
+
+system.time(
+  data %>% mutate(ind = row_number()) %>% group_by(ind) %>% mutate(dist = distanceFromWeekend(time))  
+  )
+
+```
+
+### Vectorised version
+ 
+```{r}
+distanceFromWeekendVectorised = function(dateToLookup) {
+  before = floor_date(dateToLookup, "week") + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, "week") - days(1)
+  pmin(pmax(dateToLookup - before, 0), pmax(after - dateToLookup, 0)) / dhours(1)
+}
+
+system.time(data %>% mutate(dist = distanceFromWeekendVectorised(time)))
+```
+
+## Extracting start date
+
+```{r}
+googleTrends = read.csv("/Users/markneedham/Downloads/report.csv", row.names=NULL)
+names(googleTrends) = c("week", "score")
+googleTrends %>% head(10)
+```
+
+### Non vectorised version
+
+```{r}
+system.time(
+  googleTrends %>% 
+    mutate(ind = row_number()) %>% 
+    group_by(ind) %>%
+    mutate(dates = strsplit(week, " - "),
+           start = dates[[1]][1] %>% strptime("%Y-%m-%d") %>% as.character())
+  )
+```
+
+This one isn't very easy to vectorise unless we change the function we're using - # http://stackoverflow.com/questions/3054612/r-strsplit-and-vectorization
+
+### Vectorised version
+
+```{r}
+system.time(googleTrends %>% mutate(start = substr(week, 1, 10) %>% ymd()))
+```
+
+## Calculating haversine distance
+
+```{r}
+venues = read.csv("/tmp/venues.csv")
+venues %>% head()
+centre = c(-0.129581, 51.516578)
+```
+
+### Non vectorised version
+
+```{r}
+system.time(venues %>% 
+  mutate(distanceFromCentre = by(venues, 1:nrow(venues), function(row) { distHaversine(c(row$lon, row$lat), centre)  }))
+  )
+```
+
+### Vectorised version
+
+```{r}
+system.time(venues %>% mutate(distanceFromCentre = distHaversine(cbind(venues$lon, venues$lat), centre)))
+```
+
+## Finding how many members there were on a specific date
+
+https://gist.github.com/mneedham/6ec5651f0402fd4ca22e
+
+```{r}
+cumulativeMeetupMembers = read.csv("/tmp/cumulativeMeetupMembers.csv")
+cumulativeMeetupMembers %>% sample_n(10)
+
+cumulativeMeetupMembers %>% head(10)
+
+dates = ymd("2014-09-01") + c(0:9) * weeks(1)
+groups = cumulativeMeetupMembers %>% distinct(g.name) %>% select(g.name)
+
+groupsOnDate = merge(dates, groups)
+names(groupsOnDate) = c('date', 'name')
+groupsOnDate %>% sample_n(10)
+```
+
+### Non vectorised version 
+
+```{r}
+memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    (meetupMembers %>% 
+       filter(g.name == groupName & dayMonthYear < date) %>% do(tail(., 1)))$n    
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+system.time(groupsOnDate %>% mutate(groupMembers = by(groupsOnDate, 1:nrow(groupsOnDate), function(row) { 
+        findMemberCount(row$name, as.character(row$date))
+      }) %>% 
+      cbind() %>% 
+      as.vector() ))
+```
+
+### Vectorised version
+
+```{r}
+memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    print(groupName)
+    print(date)
+    x = (meetupMembers %>% 
+       mutate(key = paste(groupName, "foo")) %>%
+       filter(g.name %in% groupName )%>%
+       group_by(key) %>%
+       do(tail(., 1)))
+    print(x)
+    x$n
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+groupsOnDate %>% mutate(date = date) %>% (groupMembers = findMemberCount(name, date))
+
+cumulativeMeetupMembers %>% head()
+
+cumulativeMeetupMembers %>% 
+  filter(g.name %in% c('Neo4j - London User Group', 'Big Data / Data Science / Data Analytics Jobs') &
+           dayMonthYear < c(ymd("2014-11-06", "2013-02-07")))
+
+groupNames = c('Neo4j - London User Group', 'Big Data / Data Science / Data Analytics Jobs')
+dates = c(ymd("2011-12-12"), "2013-12-12"))
+events = c(1,2)
+
+blah = merge(cumulativeMeetupMembers, events)
+
+cumulativeMeetupMembers %>% 
+  mutate(dayMonthYear = ymd(dayMonthYear)) %>% 
+  mutate(diff = difftime(dates, dayMonthYear)) %>%
+  filter(diff > 0 )
+
+blah %>% 
+  mutate(dayMonthYear = ymd(dayMonthYear)) %>% 
+  filter(g.name %in% groupNames & difftime(dates, dayMonthYear) > 0 ) %>%
+  group_by(y) %>%
+  do(tail(., 1))
+
+cumulativeMeetupMembers %>% 
+  mutate(dayMonthYear = ymd(dayMonthYear)) %>% 
+  mutate(event = events)
+  filter(g.name %in% groupNames & difftime(dates, dayMonthYear) > 0 ) %>%
+  
+  filter(min_rank(desc(n)) <= 2 & n > 0)
+
+
+
+cumulativeMeetupMembers %>% 
+  filter(g.name %in% groupNames & difftime(dates, dayMonthYear) < 0) %>%
+  group_by(key) %>%
+  do(tail(., 1)) %>%
+  ungroup() %>%
+  head()
+
+cumulativeMeetupMembers %>% 
+    mutate(key = paste(groupNames, dates)) %>% 
+    filter(g.name %in% groupNames) %>%
+    group_by(key) %>%
+    do(tail(., 1)) %>%
+    ungroup() %>%
+    head()
+
+
+groupsOnDate %>% head()
+cumulativeMeetupMembers %>% head()
+```
+

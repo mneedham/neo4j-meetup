@@ -47,7 +47,7 @@ byVenue = events %>%
   arrange(desc(n)) %>% 
   rename(count = n)
 
-byVenue %>% head(10)
+byVenue %>% sample_n(10)
 ```
 
 Skillsmatter is first as you'd probably expect - there are a lot of meetups going on here. Let's have a look what's happening in the rest of London:

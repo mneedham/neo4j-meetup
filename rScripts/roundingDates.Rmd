@@ -1,0 +1,84 @@
+# Rounding dates
+
+
+## Number of hours into the day (including fractions)
+```{r}
+december13 = as.POSIXlt("2014-12-13 17:30:00")
+as.numeric(december13 - trunc(december13, "day"), units="hours")
+
+library(lubridate)
+december13 <- ymd_hms("2014-12-13 17:30:00")
+(december13 - floor_date(december13, "day")) / dhours(1)
+```
+
+## Beginning of the week
+
+```{r}
+floor_date(december13, "week") + hours(23) + minutes(59) + seconds(59)
+ceiling_date(december13, "week") - days(1)
+```
+
+## Closest weekend day
+
+```{r}
+findClosestWeekendDay = function(dateToLookup) {
+  before = floor_date(dateToLookup, "week") + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, "week") - days(1)
+  if((dateToLookup - before) < (after - dateToLookup)) {
+    before  
+  } else {
+    after  
+  }
+}
+
+findClosestWeekendDay(ymd_hms("2014-12-17 18:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-17 11:33:29"))
+
+distanceFromWeekend = function(dateToLookup) {
+  before = floor_date(dateToLookup, "week") + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, "week") - days(1)
+  timeToBefore = dateToLookup - before
+  timeToAfter = after - dateToLookup
+  
+  if(timeToBefore < 0 || timeToAfter < 0) {
+    0  
+  } else {
+    if(timeToBefore < timeToAfter) {
+      timeToBefore / dhours(1)
+    } else {
+      timeToAfter / dhours(1)
+    }
+  }
+}
+
+distanceFromWeekendVectorised = function(dateToLookup) {
+  before = floor_date(dateToLookup, "week") + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, "week") - days(1)
+  pmin(pmax(dateToLookup - before, 0), pmax(after - dateToLookup, 0)) / dhours(1)
+}
+
+distanceFromWeekend(ymd_hms("2014-12-17 18:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-17 11:33:29"))
+
+distanceFromWeekend(ymd_hms("2014-12-13 11:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-14 11:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-15 11:33:29"))
+
+findClosestWeekendDay(ymd_hms("2014-12-13 13:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-14 18:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-15 18:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-17 11:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-17 13:33:29"))
+findClosestWeekendDay(ymd_hms("2014-12-19 13:33:29"))
+
+distanceFromWeekend(ymd_hms("2014-12-13 13:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-14 18:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-15 18:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-17 11:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-17 13:33:29"))
+distanceFromWeekend(ymd_hms("2014-12-19 13:33:29"))
+
+
+system.time(data %>% mutate(ind = row_number()) %>% group_by(ind) %>% mutate(dist = distanceFromWeekend(time)))
+system.time(data %>% mutate(dist = distanceFromWeekendVectorised(time)))
+```

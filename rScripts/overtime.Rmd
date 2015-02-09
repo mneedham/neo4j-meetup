@@ -44,8 +44,12 @@ ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = filteredCumulativeMe
 
 ```{r fig.width=15, fig.height=10}
 databases = c("London MongoDB User Group", "Neo4j - London User Group", "London Riak Meetup", "Hadoop Users Group UK", "Cassandra London", "Couchbase London", "London ElasticSearch User Group")
-ggplot(aes(x = dayMonthYear, y = n, color = g.name), data = cumulativeMeetupMembers %>% filter(g.name %in% databases)) + 
+ggplot(aes(x = dayMonthYear, y = n, color = g.name), 
+       data = cumulativeMeetupMembers %>% filter(g.name %in% databases)) + 
   geom_line(size = 1) +
-  xlab("year") + ylab("Number of members") + ggtitle("Number of members over time")
+  xlab("year") + 
+  ylab("Number of members") + 
+  ggtitle("Number of members over time") +
+  theme(legend.position="top")
 ```
 

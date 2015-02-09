@@ -1,0 +1,87 @@
+# Data setup
+
+```{r message=FALSE}
+library(lubridate)
+library(dplyr)
+```
+
+```{r}
+set.seed(1)
+group1Counts = as.integer(cumsum(runif(10,1,10)))
+group1Dates = ymd_hms("2011-01-01 17:00:00") + c(1) * days(group1Counts)
+
+set.seed(3)
+group2Counts = as.integer(cumsum(runif(10,1,10)))
+group2Dates = ymd_hms("2011-01-10 17:00:00") + c(1) * days(group2Counts)
+
+g1 = merge(c("Group1"), group1Counts) %>% mutate(date = group1Dates)
+g2 = merge(c("Group2"), group2Counts) %>% mutate(date = group2Dates)
+
+g = rbind(g1, g2)
+names(g) = c("name", "count", "date")
+g
+```
+
+## How many members in Group 1 on 24th February 2011 and Group 2 on 18th February 2011?
+
+We should get 51 for Group 1 and 37 for Group 2
+
+### Non vectorised
+
+```{r}
+events = data.frame(eventId = c(1,2), group = c("Group1", "Group2"), eventDate = c(ymd("2011-02-24"), ymd("2011-02-18")))
+events
+```
+
+```{r}
+getCount =  function(g, group, eventDate) {
+  (g %>% filter(name == group & eventDate > date) %>% do(tail(., 1)))$count
+}
+
+events %>% 
+  mutate(ind = row_number()) %>% group_by(ind) %>%
+  mutate(count = getCount(g, group, eventDate)) %>% 
+  ungroup() %>% select(-ind)
+```
+
+### Vectorised
+
+```{r}
+getCountV =  function(g, group, eventDate) {
+  (g %>% filter(name == group & eventDate > date) %>% do(tail(., 1)))$count
+}
+
+events %>% mutate(count = getCountV(g, group, eventDate))
+```
+
+That result isn't correct...effectively it's doing this:
+
+```{r}
+g %>% 
+  filter(name == c("Group1", "Group2") & c(ymd("2011-02-24"), ymd("2011-02-18")) > date)
+```
+
+but it isn't coming back with the correct rows for Group1, it's like it only applied the second date?
+
+```{r}
+g %>% 
+  filter(name == c("Group1") & c(ymd("2011-02-24")) > date)
+
+g %>% 
+  filter(name == c("Group1") & c(ymd("2011-02-18")) > date)
+```
+
+but even then it seems to be skipping off half of the rows on the data frame which comes back.
+
+### Trying out rank
+
+```{r}
+min_rank(desc(H))
+getCountV2 =  function(g, group, eventDate) {
+  result = g %>% filter(name == group & difftime(eventDate, date) > 0)
+  print(result %>% mutate(rank = min_rank(count)))
+  (result %>% do(tail(., 1)))$count
+}
+
+events %>% mutate(count = getCountV2(g, group, eventDate))
+```

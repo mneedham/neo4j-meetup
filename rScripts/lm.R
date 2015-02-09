@@ -3,7 +3,7 @@ library(dplyr)
 library(car)
 library(geosphere)
 
-graph = startGraph("http://localhost:7478/db/data/")
+graph = startGraph("http://localhost:7574/db/data/")
 
 # london nosql events
 query = "MATCH (g:Group)-[:HOSTED_EVENT]->(event)<-[:TO]-({response: 'yes'})<-[:RSVPD]-(),
@@ -28,7 +28,8 @@ events$monthYear <- format(events$eventTime, "%m-%Y")
 events$month <- factor(format(events$eventTime, "%B"), levels = month.name)
 events$year <- format(events$eventTime, "%Y")
 
-centre = c(-0.129581, 51.516578)
+#centre = c(-0.129581, 51.516578)
+centre = c(-0.0825, 51.5265)
 
 events$distanceFromCentre = distHaversine(c(events$lat, events$lon), centre)
 events %>% mutate(distanceFromCentre = distHaversine(c(lat, lon), centre))
@@ -58,6 +59,26 @@ closeToCentre = withDist %>% filter(fromCentre < 10000)
 
 ggplot(aes(x = fromCentre, y = rsvps), data = withDistNoOutliers) + geom_point()
 ggplot(aes(x = fromCentre, y = rsvps), data = closeToCentre) + geom_point()
+
+ggplot(aes(x = fromCentre, y = rsvps), data = withDist %>% filter(fromCentre < 6000)) + 
+  geom_point() +
+  geom_smooth(fill = NA)
+
+ggplot(aes(x = fromCentre, y = attendees), data = data) + 
+  geom_point()
+
+ggplot(aes(x = fromCentre, weight = attendees), data = data) + 
+  geom_histogram(binwidth=250)
+
+ggplot(aes(x = fromCentre), data = withDist %>%  filter(fromCentre < 6000)) + 
+  geom_histogram(binwidth=250)
+
+ggplot(aes(x = fromCentre, weight = rsvps), data = withDist %>%  filter(fromCentre < 6000)) + 
+  geom_histogram(binwidth=250)
+
+
+with(withDist %>% filter(fromCentre < 6000), cor(fromCentre, rsvps))
+cor(closeToCentre$fromCentre, closeToCentre$rsvps)
 
 # get member sign up times
 query = "match (:Person)-[:HAS_MEETUP_PROFILE]->()-[:HAS_MEMBERSHIP]->(membership)-[:OF_GROUP]->(g:Group)

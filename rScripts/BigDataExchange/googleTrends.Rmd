@@ -1,0 +1,118 @@
+```{r message=FALSE}
+library(dplyr)
+googleTrends = read.csv("/Users/markneedham/Downloads/report.csv", row.names=NULL)
+
+```{r}
+googleTrends %>% head()
+googleTrends %>% sample_n(10)
+googleTrends %>% tail()
+```
+
+```{r}
+names(googleTrends) = c("week", "score")
+```
+
+```{r}
+googleTrends %>% 
+  mutate(ind = row_number()) %>% 
+  group_by(ind) %>%
+  mutate(dates = strsplit(week, " - "),
+         start = dates[[1]][1] %>% strptime("%Y-%m-%d") %>% as.character(),
+         end =   dates[[1]][2] %>% strptime("%Y-%m-%d") %>% as.character()) %>%
+  head()
+```
+
+```{r}
+googleTrends %>% 
+  mutate(ind = row_number()) %>% 
+  group_by(ind) %>%
+  mutate(dates = strsplit(week, " - "),
+         start = dates[[1]][1] %>% strptime("%Y-%m-%d") %>% as.character(),
+         end =   dates[[1]][2] %>% strptime("%Y-%m-%d") %>% as.character()) %>%
+  filter(!is.na(start) | !is.na(end)) %>% 
+  head()
+
+```
+
+```{r}
+cleanGoogleTrends = googleTrends %>% 
+  mutate(ind = row_number()) %>% 
+  group_by(ind) %>%
+  mutate(dates = strsplit(week, " - "),
+         start = dates[[1]][1] %>% strptime("%Y-%m-%d") %>% as.character(),
+         end =   dates[[1]][2] %>% strptime("%Y-%m-%d") %>% as.character()) %>%
+  filter(!is.na(start) | !is.na(end)) %>%
+  ungroup() %>%
+  select(-c(ind, dates, week))
+
+cleanGoogleTrends %>% head()
+cleanGoogleTrends %>% sample_n(10)
+cleanGoogleTrends %>% tail()
+```
+
+```{r}
+library(ggplot2)
+ggplot(aes(x = start, y = score), data = cleanGoogleTrends) + 
+  geom_line(size = 0.5)
+```
+
+```{r}
+cleanGoogleTrends = cleanGoogleTrends %>% mutate(start =  as.Date(start))
+ggplot(aes(x = start, y = score), data = cleanGoogleTrends) + 
+  geom_line(size = 0.5)
+```
+
+```{r}
+class(cleanGoogleTrends$score)
+```
+
+```{r}
+cleanGoogleTrends = cleanGoogleTrends %>% mutate(score = as.numeric(score))
+ggplot(aes(x = start, y = score), data = cleanGoogleTrends) + 
+  geom_line(size = 0.5)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(zoo)
+cleanGoogleTrends = cleanGoogleTrends %>% 
+  mutate(rolling = rollmean(score, 4, fill = NA, align=c("right")))
+
+ggplot(aes(x = start, y = rolling), data = cleanGoogleTrends) + 
+  geom_line(size = 0.5)
+```
+
+
+```{r warning=FALSE}
+library(dplyr)
+library(zoo)
+library(ggplot2)
+
+googleTrends = read.csv("/Users/markneedham/Downloads/report.csv", row.names=NULL)
+names(googleTrends) = c("week", "score")
+
+cleanGoogleTrends = googleTrends %>% 
+  mutate(ind = row_number()) %>% 
+  group_by(ind) %>%
+  mutate(dates = strsplit(week, " - "),
+         start = dates[[1]][1] %>% strptime("%Y-%m-%d") %>% as.character(),
+         end =   dates[[1]][2] %>% strptime("%Y-%m-%d") %>% as.character()) %>%
+  filter(!is.na(start) | !is.na(end)) %>%
+  ungroup() %>%
+  select(-c(ind, dates, week)) %>%
+  mutate(start =  as.Date(start),
+         score = as.numeric(score),
+         rolling = rollmean(score, 4, fill = NA, align=c("right")))
+
+ggplot(aes(x = start, y = rolling), data = cleanGoogleTrends) + 
+  geom_line(size = 0.5)
+```
+
+```{r}
+library(dplyr)
+data = data.frame(week = c("2014-01-01 - 2014-02-07", "2014-01-08 - 2014-02-14", "foo"), stringsAsFactors=FALSE)
+data %>% mutate(dates = strsplit(week, " - "), start = dates[[row_number()]])
+data %>% 
+  mutate(ind = row_number()) %>% 
+  group_by(ind) %>%
+  mutate(dates = strsplit(week, " - "))
+```

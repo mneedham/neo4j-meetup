@@ -1,0 +1,2694 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>Vectorise all the things</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+
+</head>
+
+<body>
+<h1>Vectorise all the things</h1>
+
+<h2>Distance from the weekend</h2>
+
+<pre><code class="r">library(dplyr)
+library(lubridate)
+library(geosphere)
+options(&quot;scipen&quot;=100, &quot;digits&quot;=4)
+</code></pre>
+
+<pre><code class="r">times = ymd_hms(&quot;2002-01-01 17:00:00&quot;) + c(0:99) * hours(1)
+data = data.frame(time = times)
+data %&gt;% head()
+</code></pre>
+
+<pre><code>##                  time
+## 1 2002-01-01 17:00:00
+## 2 2002-01-01 18:00:00
+## 3 2002-01-01 19:00:00
+## 4 2002-01-01 20:00:00
+## 5 2002-01-01 21:00:00
+## 6 2002-01-01 22:00:00
+</code></pre>
+
+<p>We want to find out how many hours away from the weekend they are.</p>
+
+<h3>Non vectorised version</h3>
+
+<pre><code class="r">distanceFromWeekend = function(dateToLookup) {
+  before = floor_date(dateToLookup, &quot;week&quot;) + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, &quot;week&quot;) - days(1)
+  timeToBefore = dateToLookup - before
+  timeToAfter = after - dateToLookup
+
+  if(timeToBefore &lt; 0 || timeToAfter &lt; 0) {
+    0  
+  } else {
+    if(timeToBefore &lt; timeToAfter) {
+      timeToBefore / dhours(1)
+    } else {
+      timeToAfter / dhours(1)
+    }
+  }
+}
+
+system.time(data %&gt;% mutate(ind = row_number()) %&gt;% group_by(ind) %&gt;% mutate(dist = distanceFromWeekend(time)))
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   1.629   0.007   1.640
+</code></pre>
+
+<h3>Vectorised version</h3>
+
+<pre><code class="r">distanceFromWeekendVectorised = function(dateToLookup) {
+  before = floor_date(dateToLookup, &quot;week&quot;) + hours(23) + minutes(59) + seconds(59)
+  after  = ceiling_date(dateToLookup, &quot;week&quot;) - days(1)
+  pmin(pmax(dateToLookup - before, 0), pmax(after - dateToLookup, 0)) / dhours(1)
+}
+
+system.time(data %&gt;% mutate(dist = distanceFromWeekendVectorised(time)))
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   0.020   0.001   0.021
+</code></pre>
+
+<h2>Extracting start date</h2>
+
+<pre><code class="r">googleTrends = read.csv(&quot;/Users/markneedham/Downloads/report.csv&quot;, row.names=NULL)
+names(googleTrends) = c(&quot;week&quot;, &quot;score&quot;)
+googleTrends %&gt;% head(10)
+</code></pre>
+
+<pre><code>##                         week score
+## 1  Worldwide; 2004 - present      
+## 2         Interest over time      
+## 3                       Week neo4j
+## 4    2004-01-04 - 2004-01-10     0
+## 5    2004-01-11 - 2004-01-17     0
+## 6    2004-01-18 - 2004-01-24     0
+## 7    2004-01-25 - 2004-01-31     0
+## 8    2004-02-01 - 2004-02-07     0
+## 9    2004-02-08 - 2004-02-14     0
+## 10   2004-02-15 - 2004-02-21     0
+</code></pre>
+
+<h3>Non vectorised version</h3>
+
+<pre><code class="r">system.time(googleTrends %&gt;% 
+    mutate(ind = row_number()) %&gt;% 
+    group_by(ind) %&gt;%
+    mutate(dates = strsplit(week, &quot; - &quot;),
+           start = dates[[1]][1] %&gt;% strptime(&quot;%Y-%m-%d&quot;) %&gt;% as.character()))
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   0.253   0.007   0.263
+</code></pre>
+
+<p>This one isn&#39;t very easy to vectorise unless we change the function we&#39;re using - # <a href="http://stackoverflow.com/questions/3054612/r-strsplit-and-vectorization">http://stackoverflow.com/questions/3054612/r-strsplit-and-vectorization</a></p>
+
+<h3>Vectorised version</h3>
+
+<pre><code class="r">system.time(googleTrends %&gt;% mutate(start = substr(week, 1, 10) %&gt;% ymd()))
+</code></pre>
+
+<pre><code>## Warning: 94 failed to parse.
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   0.022   0.000   0.023
+</code></pre>
+
+<h2>Calculating haversine distance</h2>
+
+<pre><code class="r">venues = read.csv(&quot;/tmp/venues.csv&quot;)
+centre = c(-0.129581, 51.516578)
+</code></pre>
+
+<h3>Non vectorised version</h3>
+
+<pre><code class="r">system.time(venues %&gt;% 
+  mutate(distanceFromCentre = by(venues, 1:nrow(venues), function(row) { distHaversine(c(row$lon, row$lat), centre)  })))
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   0.035   0.000   0.036
+</code></pre>
+
+<h3>Vectorised version</h3>
+
+<pre><code class="r">system.time(venues %&gt;% mutate(distanceFromCentre = distHaversine(cbind(venues$lon, venues$lat), centre)))
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   0.001   0.000   0.001
+</code></pre>
+
+<h2>Finding how many members there were on a specific date</h2>
+
+<p><a href="https://gist.github.com/mneedham/6ec5651f0402fd4ca22e">https://gist.github.com/mneedham/6ec5651f0402fd4ca22e</a></p>
+
+<pre><code class="r">cumulativeMeetupMembers = read.csv(&quot;/tmp/cumulativeMeetupMembers.csv&quot;)
+
+dates = ymd(&quot;2014-09-01&quot;) + c(0:9) * weeks(1)
+groups = cumulativeMeetupMembers %&gt;% distinct(g.name) %&gt;% select(g.name)
+
+groupsOnDate = merge(dates, groups)
+names(groupsOnDate) = c(&#39;date&#39;, &#39;name&#39;)
+</code></pre>
+
+<h3>Non vectorised version</h3>
+
+<pre><code class="r">memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    (meetupMembers %&gt;% 
+       filter(g.name == groupName &amp; dayMonthYear &lt; date) %&gt;% do(tail(., 1)))$n    
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+system.time(groupsOnDate %&gt;% mutate(groupMembers = by(groupsOnDate, 1:nrow(groupsOnDate), function(row) { 
+        findMemberCount(row$name, as.character(row$date))
+      }) %&gt;% 
+      cbind() %&gt;% 
+      as.vector() ))
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>## Warning in Ops.factor(structure(c(930L, 938L, 939L, 942L, 950L, 987L,
+## 1007L, : &#39;&lt;&#39; not meaningful for factors
+</code></pre>
+
+<pre><code>##    user  system elapsed 
+##   1.108   0.007   1.116
+</code></pre>
+
+<h3>Vectorised version</h3>
+
+<pre><code class="r">memberCount = function(meetupMembers) {
+  function(groupName, date) {
+    print(groupName)
+    print(date)
+    x = (meetupMembers %&gt;% 
+       mutate(key = paste(groupName, &quot;foo&quot;)) %&gt;%
+       filter(g.name %in% groupName )%&gt;%
+       group_by(key) %&gt;%
+       do(tail(., 1)))
+    print(x)
+    x$n
+  }  
+} 
+
+findMemberCount = memberCount(cumulativeMeetupMembers)
+
+groupsOnDate %&gt;% mutate(date = date) %&gt;% (groupMembers = findMemberCount(name, date))
+</code></pre>
+
+<pre><code>## Error in print(groupName): object &#39;name&#39; not found
+</code></pre>
+
+<pre><code class="r">cumulativeMeetupMembers %&gt;% head()
+</code></pre>
+
+<pre><code>##                                          g.name dayMonthYear  n
+## 1 Big Data / Data Science / Data Analytics Jobs   2013-01-29  1
+## 2 Big Data / Data Science / Data Analytics Jobs   2013-02-06 15
+## 3 Big Data / Data Science / Data Analytics Jobs   2013-02-07 28
+## 4 Big Data / Data Science / Data Analytics Jobs   2013-02-10 31
+## 5 Big Data / Data Science / Data Analytics Jobs   2013-02-18 33
+## 6 Big Data / Data Science / Data Analytics Jobs   2013-03-27 38
+</code></pre>
+
+<pre><code class="r">cumulativeMeetupMembers %&gt;% 
+  filter(g.name %in% c(&#39;Neo4j - London User Group&#39;, &#39;Big Data / Data Science / Data Analytics Jobs&#39;) &amp;
+           dayMonthYear &lt; c(ymd(&quot;2014-11-06&quot;, &quot;2013-02-07&quot;)))
+</code></pre>
+
+<pre><code>## Warning in filter_impl(.data, dots): Incompatible methods (&quot;Ops.factor&quot;,
+## &quot;Ops.POSIXt&quot;) for &quot;&lt;&quot;
+</code></pre>
+
+<pre><code>##                                            g.name dayMonthYear    n
+## 1   Big Data / Data Science / Data Analytics Jobs   2013-01-29    1
+## 2   Big Data / Data Science / Data Analytics Jobs   2013-02-06   15
+## 3   Big Data / Data Science / Data Analytics Jobs   2013-02-07   28
+## 4   Big Data / Data Science / Data Analytics Jobs   2013-02-10   31
+## 5   Big Data / Data Science / Data Analytics Jobs   2013-02-18   33
+## 6   Big Data / Data Science / Data Analytics Jobs   2013-03-27   38
+## 7   Big Data / Data Science / Data Analytics Jobs   2013-04-16   41
+## 8   Big Data / Data Science / Data Analytics Jobs   2013-07-17   53
+## 9   Big Data / Data Science / Data Analytics Jobs   2013-08-28   58
+## 10  Big Data / Data Science / Data Analytics Jobs   2013-11-11   63
+## 11  Big Data / Data Science / Data Analytics Jobs   2013-11-13   65
+## 12  Big Data / Data Science / Data Analytics Jobs   2014-02-06   69
+## 13  Big Data / Data Science / Data Analytics Jobs   2014-11-19  100
+## 14                      Neo4j - London User Group   2011-06-05    7
+## 15                      Neo4j - London User Group   2011-06-07    8
+## 16                      Neo4j - London User Group   2011-06-10    9
+## 17                      Neo4j - London User Group   2011-06-12   10
+## 18                      Neo4j - London User Group   2011-06-13   11
+## 19                      Neo4j - London User Group   2011-06-15   12
+## 20                      Neo4j - London User Group   2011-07-04   13
+## 21                      Neo4j - London User Group   2011-07-05   14
+## 22                      Neo4j - London User Group   2011-07-15   15
+## 23                      Neo4j - London User Group   2011-07-26   16
+## 24                      Neo4j - London User Group   2011-08-23   17
+## 25                      Neo4j - London User Group   2011-10-18   18
+## 26                      Neo4j - London User Group   2011-11-24   19
+## 27                      Neo4j - London User Group   2011-11-28   20
+## 28                      Neo4j - London User Group   2012-01-09   21
+## 29                      Neo4j - London User Group   2012-01-14   22
+## 30                      Neo4j - London User Group   2012-01-16   24
+## 31                      Neo4j - London User Group   2012-02-13   25
+## 32                      Neo4j - London User Group   2012-02-18   26
+## 33                      Neo4j - London User Group   2012-02-21   27
+## 34                      Neo4j - London User Group   2012-02-23   28
+## 35                      Neo4j - London User Group   2012-02-25   29
+## 36                      Neo4j - London User Group   2012-02-26   30
+## 37                      Neo4j - London User Group   2012-02-28   31
+## 38                      Neo4j - London User Group   2012-03-01   32
+## 39                      Neo4j - London User Group   2012-03-02   33
+## 40                      Neo4j - London User Group   2012-03-08   34
+## 41                      Neo4j - London User Group   2012-03-13   35
+## 42                      Neo4j - London User Group   2012-03-14   36
+## 43                      Neo4j - London User Group   2012-03-17   37
+## 44                      Neo4j - London User Group   2012-03-18   39
+## 45                      Neo4j - London User Group   2012-03-19   40
+## 46                      Neo4j - London User Group   2012-03-20   41
+## 47                      Neo4j - London User Group   2012-03-31   42
+## 48                      Neo4j - London User Group   2012-04-05   43
+## 49                      Neo4j - London User Group   2012-04-24   44
+## 50                      Neo4j - London User Group   2012-05-04   45
+## 51                      Neo4j - London User Group   2012-05-09   46
+## 52                      Neo4j - London User Group   2012-05-16   47
+## 53                      Neo4j - London User Group   2012-05-20   48
+## 54                      Neo4j - London User Group   2012-05-21   49
+## 55                      Neo4j - London User Group   2012-05-22   50
+## 56                      Neo4j - London User Group   2012-05-23   51
+## 57                      Neo4j - London User Group   2012-05-24   52
+## 58                      Neo4j - London User Group   2012-05-31   53
+## 59                      Neo4j - London User Group   2012-06-05   54
+## 60                      Neo4j - London User Group   2012-06-12   55
+## 61                      Neo4j - London User Group   2012-06-14   56
+## 62                      Neo4j - London User Group   2012-06-22   57
+## 63                      Neo4j - London User Group   2012-06-27   58
+## 64                      Neo4j - London User Group   2012-07-03   60
+## 65                      Neo4j - London User Group   2012-07-04   62
+## 66                      Neo4j - London User Group   2012-07-07   63
+## 67                      Neo4j - London User Group   2012-07-11   64
+## 68                      Neo4j - London User Group   2012-07-17   66
+## 69                      Neo4j - London User Group   2012-07-18   67
+## 70                      Neo4j - London User Group   2012-07-19   68
+## 71                      Neo4j - London User Group   2012-07-20   69
+## 72                      Neo4j - London User Group   2012-07-25   70
+## 73                      Neo4j - London User Group   2012-07-26   71
+## 74                      Neo4j - London User Group   2012-07-31   73
+## 75                      Neo4j - London User Group   2012-08-06   78
+## 76                      Neo4j - London User Group   2012-08-07   79
+## 77                      Neo4j - London User Group   2012-08-08   80
+## 78                      Neo4j - London User Group   2012-08-09   82
+## 79                      Neo4j - London User Group   2012-08-13   84
+## 80                      Neo4j - London User Group   2012-08-20   86
+## 81                      Neo4j - London User Group   2012-08-21   87
+## 82                      Neo4j - London User Group   2012-08-22   90
+## 83                      Neo4j - London User Group   2012-08-23   95
+## 84                      Neo4j - London User Group   2012-08-27   98
+## 85                      Neo4j - London User Group   2012-08-28  101
+## 86                      Neo4j - London User Group   2012-08-29  102
+## 87                      Neo4j - London User Group   2012-08-31  103
+## 88                      Neo4j - London User Group   2012-09-04  104
+## 89                      Neo4j - London User Group   2012-09-05  105
+## 90                      Neo4j - London User Group   2012-09-13  107
+## 91                      Neo4j - London User Group   2012-09-18  108
+## 92                      Neo4j - London User Group   2012-09-21  109
+## 93                      Neo4j - London User Group   2012-09-23  111
+## 94                      Neo4j - London User Group   2012-09-25  114
+## 95                      Neo4j - London User Group   2012-09-30  115
+## 96                      Neo4j - London User Group   2012-10-02  117
+## 97                      Neo4j - London User Group   2012-10-03  119
+## 98                      Neo4j - London User Group   2012-10-04  122
+## 99                      Neo4j - London User Group   2012-10-05  124
+## 100                     Neo4j - London User Group   2012-10-09  126
+## 101                     Neo4j - London User Group   2012-10-10  127
+## 102                     Neo4j - London User Group   2012-10-11  128
+## 103                     Neo4j - London User Group   2012-10-13  129
+## 104                     Neo4j - London User Group   2012-10-15  131
+## 105                     Neo4j - London User Group   2012-10-17  133
+## 106                     Neo4j - London User Group   2012-10-18  134
+## 107                     Neo4j - London User Group   2012-10-20  135
+## 108                     Neo4j - London User Group   2012-10-22  137
+## 109                     Neo4j - London User Group   2012-10-24  138
+## 110                     Neo4j - London User Group   2012-10-29  140
+## 111                     Neo4j - London User Group   2012-10-30  141
+## 112                     Neo4j - London User Group   2012-10-31  142
+## 113                     Neo4j - London User Group   2012-11-03  143
+## 114                     Neo4j - London User Group   2012-11-06  146
+## 115                     Neo4j - London User Group   2012-11-07  147
+## 116                     Neo4j - London User Group   2012-11-08  149
+## 117                     Neo4j - London User Group   2012-11-10  150
+## 118                     Neo4j - London User Group   2012-11-12  154
+## 119                     Neo4j - London User Group   2012-11-13  155
+## 120                     Neo4j - London User Group   2012-11-14  157
+## 121                     Neo4j - London User Group   2012-11-15  158
+## 122                     Neo4j - London User Group   2012-11-16  159
+## 123                     Neo4j - London User Group   2012-11-17  160
+## 124                     Neo4j - London User Group   2012-11-19  161
+## 125                     Neo4j - London User Group   2012-11-20  164
+## 126                     Neo4j - London User Group   2012-11-21  167
+## 127                     Neo4j - London User Group   2012-11-22  168
+## 128                     Neo4j - London User Group   2012-11-23  169
+## 129                     Neo4j - London User Group   2012-11-26  170
+## 130                     Neo4j - London User Group   2012-11-27  171
+## 131                     Neo4j - London User Group   2012-11-28  173
+## 132                     Neo4j - London User Group   2012-12-03  174
+## 133                     Neo4j - London User Group   2012-12-04  175
+## 134                     Neo4j - London User Group   2012-12-08  176
+## 135                     Neo4j - London User Group   2012-12-17  177
+## 136                     Neo4j - London User Group   2012-12-19  178
+## 137                     Neo4j - London User Group   2012-12-20  179
+## 138                     Neo4j - London User Group   2012-12-23  180
+## 139                     Neo4j - London User Group   2013-01-01  182
+## 140                     Neo4j - London User Group   2013-01-02  183
+## 141                     Neo4j - London User Group   2013-01-03  184
+## 142                     Neo4j - London User Group   2013-01-04  188
+## 143                     Neo4j - London User Group   2013-01-05  189
+## 144                     Neo4j - London User Group   2013-01-07  190
+## 145                     Neo4j - London User Group   2013-01-08  192
+## 146                     Neo4j - London User Group   2013-01-11  194
+## 147                     Neo4j - London User Group   2013-01-12  195
+## 148                     Neo4j - London User Group   2013-01-14  196
+## 149                     Neo4j - London User Group   2013-01-15  197
+## 150                     Neo4j - London User Group   2013-01-16  198
+## 151                     Neo4j - London User Group   2013-01-18  199
+## 152                     Neo4j - London User Group   2013-01-20  200
+## 153                     Neo4j - London User Group   2013-01-22  201
+## 154                     Neo4j - London User Group   2013-01-24  203
+## 155                     Neo4j - London User Group   2013-01-26  204
+## 156                     Neo4j - London User Group   2013-01-28  209
+## 157                     Neo4j - London User Group   2013-01-29  217
+## 158                     Neo4j - London User Group   2013-01-30  227
+## 159                     Neo4j - London User Group   2013-01-31  230
+## 160                     Neo4j - London User Group   2013-02-01  231
+## 161                     Neo4j - London User Group   2013-02-02  233
+## 162                     Neo4j - London User Group   2013-02-04  234
+## 163                     Neo4j - London User Group   2013-02-06  236
+## 164                     Neo4j - London User Group   2013-02-07  239
+## 165                     Neo4j - London User Group   2013-02-08  240
+## 166                     Neo4j - London User Group   2013-02-09  241
+## 167                     Neo4j - London User Group   2013-02-10  243
+## 168                     Neo4j - London User Group   2013-02-11  244
+## 169                     Neo4j - London User Group   2013-02-13  247
+## 170                     Neo4j - London User Group   2013-02-14  248
+## 171                     Neo4j - London User Group   2013-02-15  249
+## 172                     Neo4j - London User Group   2013-02-16  251
+## 173                     Neo4j - London User Group   2013-02-18  254
+## 174                     Neo4j - London User Group   2013-02-19  256
+## 175                     Neo4j - London User Group   2013-02-20  257
+## 176                     Neo4j - London User Group   2013-02-21  258
+## 177                     Neo4j - London User Group   2013-02-22  263
+## 178                     Neo4j - London User Group   2013-02-25  269
+## 179                     Neo4j - London User Group   2013-02-26  271
+## 180                     Neo4j - London User Group   2013-02-27  273
+## 181                     Neo4j - London User Group   2013-02-28  274
+## 182                     Neo4j - London User Group   2013-03-01  276
+## 183                     Neo4j - London User Group   2013-03-04  277
+## 184                     Neo4j - London User Group   2013-03-06  279
+## 185                     Neo4j - London User Group   2013-03-08  281
+## 186                     Neo4j - London User Group   2013-03-11  282
+## 187                     Neo4j - London User Group   2013-03-12  287
+## 188                     Neo4j - London User Group   2013-03-13  288
+## 189                     Neo4j - London User Group   2013-03-14  289
+## 190                     Neo4j - London User Group   2013-03-17  290
+## 191                     Neo4j - London User Group   2013-03-18  291
+## 192                     Neo4j - London User Group   2013-03-21  292
+## 193                     Neo4j - London User Group   2013-03-22  293
+## 194                     Neo4j - London User Group   2013-03-28  294
+## 195                     Neo4j - London User Group   2013-04-01  295
+## 196                     Neo4j - London User Group   2013-04-03  296
+## 197                     Neo4j - London User Group   2013-04-04  298
+## 198                     Neo4j - London User Group   2013-04-05  299
+## 199                     Neo4j - London User Group   2013-04-09  300
+## 200                     Neo4j - London User Group   2013-04-11  301
+## 201                     Neo4j - London User Group   2013-04-12  302
+## 202                     Neo4j - London User Group   2013-04-13  303
+## 203                     Neo4j - London User Group   2013-04-14  304
+## 204                     Neo4j - London User Group   2013-04-15  305
+## 205                     Neo4j - London User Group   2013-04-16  307
+## 206                     Neo4j - London User Group   2013-04-17  309
+## 207                     Neo4j - London User Group   2013-04-18  312
+## 208                     Neo4j - London User Group   2013-04-19  314
+## 209                     Neo4j - London User Group   2013-04-21  315
+## 210                     Neo4j - London User Group   2013-04-22  321
+## 211                     Neo4j - London User Group   2013-04-23  322
+## 212                     Neo4j - London User Group   2013-04-24  323
+## 213                     Neo4j - London User Group   2013-04-26  325
+## 214                     Neo4j - London User Group   2013-04-28  327
+## 215                     Neo4j - London User Group   2013-05-01  330
+## 216                     Neo4j - London User Group   2013-05-03  331
+## 217                     Neo4j - London User Group   2013-05-05  332
+## 218                     Neo4j - London User Group   2013-05-06  333
+## 219                     Neo4j - London User Group   2013-05-07  336
+## 220                     Neo4j - London User Group   2013-05-08  337
+## 221                     Neo4j - London User Group   2013-05-09  340
+## 222                     Neo4j - London User Group   2013-05-10  341
+## 223                     Neo4j - London User Group   2013-05-11  342
+## 224                     Neo4j - London User Group   2013-05-12  343
+## 225                     Neo4j - London User Group   2013-05-13  345
+## 226                     Neo4j - London User Group   2013-05-14  350
+## 227                     Neo4j - London User Group   2013-05-16  352
+## 228                     Neo4j - London User Group   2013-05-17  354
+## 229                     Neo4j - London User Group   2013-05-18  355
+## 230                     Neo4j - London User Group   2013-05-19  356
+## 231                     Neo4j - London User Group   2013-05-20  358
+## 232                     Neo4j - London User Group   2013-05-21  360
+## 233                     Neo4j - London User Group   2013-05-22  361
+## 234                     Neo4j - London User Group   2013-05-23  363
+## 235                     Neo4j - London User Group   2013-05-24  364
+## 236                     Neo4j - London User Group   2013-05-26  366
+## 237                     Neo4j - London User Group   2013-05-27  375
+## 238                     Neo4j - London User Group   2013-05-28  383
+## 239                     Neo4j - London User Group   2013-05-29  388
+## 240                     Neo4j - London User Group   2013-05-30  390
+## 241                     Neo4j - London User Group   2013-05-31  391
+## 242                     Neo4j - London User Group   2013-06-01  392
+## 243                     Neo4j - London User Group   2013-06-03  393
+## 244                     Neo4j - London User Group   2013-06-04  397
+## 245                     Neo4j - London User Group   2013-06-06  398
+## 246                     Neo4j - London User Group   2013-06-08  399
+## 247                     Neo4j - London User Group   2013-06-09  400
+## 248                     Neo4j - London User Group   2013-06-10  406
+## 249                     Neo4j - London User Group   2013-06-11  407
+## 250                     Neo4j - London User Group   2013-06-12  408
+## 251                     Neo4j - London User Group   2013-06-13  409
+## 252                     Neo4j - London User Group   2013-06-14  413
+## 253                     Neo4j - London User Group   2013-06-15  414
+## 254                     Neo4j - London User Group   2013-06-17  416
+## 255                     Neo4j - London User Group   2013-06-19  417
+## 256                     Neo4j - London User Group   2013-06-21  419
+## 257                     Neo4j - London User Group   2013-06-23  421
+## 258                     Neo4j - London User Group   2013-06-24  422
+## 259                     Neo4j - London User Group   2013-06-25  423
+## 260                     Neo4j - London User Group   2013-06-26  425
+## 261                     Neo4j - London User Group   2013-06-30  426
+## 262                     Neo4j - London User Group   2013-07-01  427
+## 263                     Neo4j - London User Group   2013-07-03  428
+## 264                     Neo4j - London User Group   2013-07-05  429
+## 265                     Neo4j - London User Group   2013-07-08  430
+## 266                     Neo4j - London User Group   2013-07-10  431
+## 267                     Neo4j - London User Group   2013-07-19  432
+## 268                     Neo4j - London User Group   2013-07-21  433
+## 269                     Neo4j - London User Group   2013-07-22  434
+## 270                     Neo4j - London User Group   2013-07-24  435
+## 271                     Neo4j - London User Group   2013-07-25  436
+## 272                     Neo4j - London User Group   2013-07-27  437
+## 273                     Neo4j - London User Group   2013-07-29  439
+## 274                     Neo4j - London User Group   2013-07-30  441
+## 275                     Neo4j - London User Group   2013-07-31  443
+## 276                     Neo4j - London User Group   2013-08-01  445
+## 277                     Neo4j - London User Group   2013-08-05  447
+## 278                     Neo4j - London User Group   2013-08-07  448
+## 279                     Neo4j - London User Group   2013-08-09  449
+## 280                     Neo4j - London User Group   2013-08-11  450
+## 281                     Neo4j - London User Group   2013-08-12  454
+## 282                     Neo4j - London User Group   2013-08-14  460
+## 283                     Neo4j - London User Group   2013-08-15  468
+## 284                     Neo4j - London User Group   2013-08-16  469
+## 285                     Neo4j - London User Group   2013-08-19  473
+## 286                     Neo4j - London User Group   2013-08-20  477
+## 287                     Neo4j - London User Group   2013-08-21  479
+## 288                     Neo4j - London User Group   2013-08-22  482
+## 289                     Neo4j - London User Group   2013-08-27  485
+## 290                     Neo4j - London User Group   2013-08-28  486
+## 291                     Neo4j - London User Group   2013-08-29  488
+## 292                     Neo4j - London User Group   2013-08-31  489
+## 293                     Neo4j - London User Group   2013-09-02  490
+## 294                     Neo4j - London User Group   2013-09-03  492
+## 295                     Neo4j - London User Group   2013-09-06  493
+## 296                     Neo4j - London User Group   2013-09-07  495
+## 297                     Neo4j - London User Group   2013-09-10  497
+## 298                     Neo4j - London User Group   2013-09-11  498
+## 299                     Neo4j - London User Group   2013-09-15  499
+## 300                     Neo4j - London User Group   2013-09-16  501
+## 301                     Neo4j - London User Group   2013-09-17  502
+## 302                     Neo4j - London User Group   2013-09-18  504
+## 303                     Neo4j - London User Group   2013-09-19  509
+## 304                     Neo4j - London User Group   2013-09-20  514
+## 305                     Neo4j - London User Group   2013-09-22  517
+## 306                     Neo4j - London User Group   2013-09-23  520
+## 307                     Neo4j - London User Group   2013-09-24  525
+## 308                     Neo4j - London User Group   2013-09-25  530
+## 309                     Neo4j - London User Group   2013-09-26  533
+## 310                     Neo4j - London User Group   2013-09-27  535
+## 311                     Neo4j - London User Group   2013-09-29  537
+## 312                     Neo4j - London User Group   2013-09-30  538
+## 313                     Neo4j - London User Group   2013-10-01  541
+## 314                     Neo4j - London User Group   2013-10-02  542
+## 315                     Neo4j - London User Group   2013-10-03  543
+## 316                     Neo4j - London User Group   2013-10-06  545
+## 317                     Neo4j - London User Group   2013-10-08  546
+## 318                     Neo4j - London User Group   2013-10-09  547
+## 319                     Neo4j - London User Group   2013-10-11  548
+## 320                     Neo4j - London User Group   2013-10-14  549
+## 321                     Neo4j - London User Group   2013-10-16  551
+## 322                     Neo4j - London User Group   2013-10-17  552
+## 323                     Neo4j - London User Group   2013-10-20  554
+## 324                     Neo4j - London User Group   2013-10-21  555
+## 325                     Neo4j - London User Group   2013-10-22  557
+## 326                     Neo4j - London User Group   2013-10-24  559
+## 327                     Neo4j - London User Group   2013-10-25  560
+## 328                     Neo4j - London User Group   2013-10-27  562
+## 329                     Neo4j - London User Group   2013-10-28  569
+## 330                     Neo4j - London User Group   2013-10-29  575
+## 331                     Neo4j - London User Group   2013-10-30  578
+## 332                     Neo4j - London User Group   2013-10-31  580
+## 333                     Neo4j - London User Group   2013-11-01  581
+## 334                     Neo4j - London User Group   2013-11-07  582
+## 335                     Neo4j - London User Group   2013-11-10  583
+## 336                     Neo4j - London User Group   2013-11-11  584
+## 337                     Neo4j - London User Group   2013-11-16  586
+## 338                     Neo4j - London User Group   2013-11-17  587
+## 339                     Neo4j - London User Group   2013-11-18  588
+## 340                     Neo4j - London User Group   2013-11-19  590
+## 341                     Neo4j - London User Group   2013-11-20  595
+## 342                     Neo4j - London User Group   2013-11-22  598
+## 343                     Neo4j - London User Group   2013-11-23  600
+## 344                     Neo4j - London User Group   2013-11-24  602
+## 345                     Neo4j - London User Group   2013-11-25  606
+## 346                     Neo4j - London User Group   2013-11-26  609
+## 347                     Neo4j - London User Group   2013-11-27  612
+## 348                     Neo4j - London User Group   2013-11-28  613
+## 349                     Neo4j - London User Group   2013-11-30  614
+## 350                     Neo4j - London User Group   2013-12-03  615
+## 351                     Neo4j - London User Group   2013-12-04  616
+## 352                     Neo4j - London User Group   2013-12-05  617
+## 353                     Neo4j - London User Group   2013-12-06  618
+## 354                     Neo4j - London User Group   2013-12-07  619
+## 355                     Neo4j - London User Group   2013-12-08  620
+## 356                     Neo4j - London User Group   2013-12-10  621
+## 357                     Neo4j - London User Group   2013-12-11  622
+## 358                     Neo4j - London User Group   2013-12-14  623
+## 359                     Neo4j - London User Group   2013-12-16  625
+## 360                     Neo4j - London User Group   2013-12-17  626
+## 361                     Neo4j - London User Group   2013-12-18  627
+## 362                     Neo4j - London User Group   2013-12-23  628
+## 363                     Neo4j - London User Group   2013-12-25  629
+## 364                     Neo4j - London User Group   2013-12-28  630
+## 365                     Neo4j - London User Group   2013-12-29  631
+## 366                     Neo4j - London User Group   2013-12-30  632
+## 367                     Neo4j - London User Group   2014-01-01  633
+## 368                     Neo4j - London User Group   2014-01-02  637
+## 369                     Neo4j - London User Group   2014-01-03  641
+## 370                     Neo4j - London User Group   2014-01-06  642
+## 371                     Neo4j - London User Group   2014-01-07  647
+## 372                     Neo4j - London User Group   2014-01-08  649
+## 373                     Neo4j - London User Group   2014-01-09  650
+## 374                     Neo4j - London User Group   2014-01-11  652
+## 375                     Neo4j - London User Group   2014-01-12  653
+## 376                     Neo4j - London User Group   2014-01-13  656
+## 377                     Neo4j - London User Group   2014-01-14  657
+## 378                     Neo4j - London User Group   2014-01-15  660
+## 379                     Neo4j - London User Group   2014-01-16  662
+## 380                     Neo4j - London User Group   2014-01-18  666
+## 381                     Neo4j - London User Group   2014-01-20  668
+## 382                     Neo4j - London User Group   2014-01-21  672
+## 383                     Neo4j - London User Group   2014-01-22  673
+## 384                     Neo4j - London User Group   2014-01-23  676
+## 385                     Neo4j - London User Group   2014-01-24  678
+## 386                     Neo4j - London User Group   2014-01-25  683
+## 387                     Neo4j - London User Group   2014-01-26  685
+## 388                     Neo4j - London User Group   2014-01-27  694
+## 389                     Neo4j - London User Group   2014-01-28  700
+## 390                     Neo4j - London User Group   2014-01-29  705
+## 391                     Neo4j - London User Group   2014-01-30  708
+## 392                     Neo4j - London User Group   2014-01-31  709
+## 393                     Neo4j - London User Group   2014-02-02  711
+## 394                     Neo4j - London User Group   2014-02-03  713
+## 395                     Neo4j - London User Group   2014-02-04  718
+## 396                     Neo4j - London User Group   2014-02-05  720
+## 397                     Neo4j - London User Group   2014-02-06  730
+## 398                     Neo4j - London User Group   2014-02-07  732
+## 399                     Neo4j - London User Group   2014-02-08  734
+## 400                     Neo4j - London User Group   2014-02-09  735
+## 401                     Neo4j - London User Group   2014-02-10  739
+## 402                     Neo4j - London User Group   2014-02-11  742
+## 403                     Neo4j - London User Group   2014-02-12  744
+## 404                     Neo4j - London User Group   2014-02-13  746
+## 405                     Neo4j - London User Group   2014-02-15  748
+## 406                     Neo4j - London User Group   2014-02-16  754
+## 407                     Neo4j - London User Group   2014-02-17  756
+## 408                     Neo4j - London User Group   2014-02-18  758
+## 409                     Neo4j - London User Group   2014-02-19  761
+## 410                     Neo4j - London User Group   2014-02-20  763
+## 411                     Neo4j - London User Group   2014-02-21  764
+## 412                     Neo4j - London User Group   2014-02-23  767
+## 413                     Neo4j - London User Group   2014-02-24  778
+## 414                     Neo4j - London User Group   2014-02-25  785
+## 415                     Neo4j - London User Group   2014-02-26  788
+## 416                     Neo4j - London User Group   2014-02-27  792
+## 417                     Neo4j - London User Group   2014-02-28  794
+## 418                     Neo4j - London User Group   2014-03-02  796
+## 419                     Neo4j - London User Group   2014-03-03  798
+## 420                     Neo4j - London User Group   2014-03-04  801
+## 421                     Neo4j - London User Group   2014-03-05  804
+## 422                     Neo4j - London User Group   2014-03-06  806
+## 423                     Neo4j - London User Group   2014-03-07  808
+## 424                     Neo4j - London User Group   2014-03-10  809
+## 425                     Neo4j - London User Group   2014-03-11  815
+## 426                     Neo4j - London User Group   2014-03-12  818
+## 427                     Neo4j - London User Group   2014-03-13  821
+## 428                     Neo4j - London User Group   2014-03-14  825
+## 429                     Neo4j - London User Group   2014-03-15  826
+## 430                     Neo4j - London User Group   2014-03-16  827
+## 431                     Neo4j - London User Group   2014-03-17  835
+## 432                     Neo4j - London User Group   2014-03-18  839
+## 433                     Neo4j - London User Group   2014-03-19  840
+## 434                     Neo4j - London User Group   2014-03-20  843
+## 435                     Neo4j - London User Group   2014-03-21  846
+## 436                     Neo4j - London User Group   2014-03-23  848
+## 437                     Neo4j - London User Group   2014-03-24  862
+## 438                     Neo4j - London User Group   2014-03-25  870
+## 439                     Neo4j - London User Group   2014-03-26  875
+## 440                     Neo4j - London User Group   2014-03-27  876
+## 441                     Neo4j - London User Group   2014-03-28  877
+## 442                     Neo4j - London User Group   2014-03-29  879
+## 443                     Neo4j - London User Group   2014-03-31  880
+## 444                     Neo4j - London User Group   2014-04-01  888
+## 445                     Neo4j - London User Group   2014-04-02  891
+## 446                     Neo4j - London User Group   2014-04-03  895
+## 447                     Neo4j - London User Group   2014-04-04  898
+## 448                     Neo4j - London User Group   2014-04-05  899
+## 449                     Neo4j - London User Group   2014-04-06  902
+## 450                     Neo4j - London User Group   2014-04-07  907
+## 451                     Neo4j - London User Group   2014-04-08  909
+## 452                     Neo4j - London User Group   2014-04-09  913
+## 453                     Neo4j - London User Group   2014-04-11  918
+## 454                     Neo4j - London User Group   2014-04-12  922
+## 455                     Neo4j - London User Group   2014-04-14  936
+## 456                     Neo4j - London User Group   2014-04-15  944
+## 457                     Neo4j - London User Group   2014-04-16  951
+## 458                     Neo4j - London User Group   2014-04-17  952
+## 459                     Neo4j - London User Group   2014-04-21  954
+## 460                     Neo4j - London User Group   2014-04-22  960
+## 461                     Neo4j - London User Group   2014-04-23  966
+## 462                     Neo4j - London User Group   2014-04-24  968
+## 463                     Neo4j - London User Group   2014-04-25  974
+## 464                     Neo4j - London User Group   2014-04-26  975
+## 465                     Neo4j - London User Group   2014-04-27  979
+## 466                     Neo4j - London User Group   2014-04-28  982
+## 467                     Neo4j - London User Group   2014-04-29  990
+## 468                     Neo4j - London User Group   2014-04-30  994
+## 469                     Neo4j - London User Group   2014-05-01  995
+## 470                     Neo4j - London User Group   2014-05-02  998
+## 471                     Neo4j - London User Group   2014-05-03  999
+## 472                     Neo4j - London User Group   2014-05-05 1000
+## 473                     Neo4j - London User Group   2014-05-06 1005
+## 474                     Neo4j - London User Group   2014-05-07 1007
+## 475                     Neo4j - London User Group   2014-05-08 1010
+## 476                     Neo4j - London User Group   2014-05-09 1011
+## 477                     Neo4j - London User Group   2014-05-11 1015
+## 478                     Neo4j - London User Group   2014-05-12 1025
+## 479                     Neo4j - London User Group   2014-05-13 1031
+## 480                     Neo4j - London User Group   2014-05-14 1034
+## 481                     Neo4j - London User Group   2014-05-15 1040
+## 482                     Neo4j - London User Group   2014-05-17 1042
+## 483                     Neo4j - London User Group   2014-05-18 1048
+## 484                     Neo4j - London User Group   2014-05-19 1055
+## 485                     Neo4j - London User Group   2014-05-20 1060
+## 486                     Neo4j - London User Group   2014-05-21 1066
+## 487                     Neo4j - London User Group   2014-05-22 1072
+## 488                     Neo4j - London User Group   2014-05-23 1073
+## 489                     Neo4j - London User Group   2014-05-24 1075
+## 490                     Neo4j - London User Group   2014-05-25 1078
+## 491                     Neo4j - London User Group   2014-05-26 1079
+## 492                     Neo4j - London User Group   2014-05-27 1083
+## 493                     Neo4j - London User Group   2014-05-28 1085
+## 494                     Neo4j - London User Group   2014-05-30 1089
+## 495                     Neo4j - London User Group   2014-05-31 1091
+## 496                     Neo4j - London User Group   2014-06-02 1100
+## 497                     Neo4j - London User Group   2014-06-03 1108
+## 498                     Neo4j - London User Group   2014-06-04 1115
+## 499                     Neo4j - London User Group   2014-06-05 1119
+## 500                     Neo4j - London User Group   2014-06-06 1123
+## 501                     Neo4j - London User Group   2014-06-07 1124
+## 502                     Neo4j - London User Group   2014-06-09 1125
+## 503                     Neo4j - London User Group   2014-06-10 1127
+## 504                     Neo4j - London User Group   2014-06-11 1130
+## 505                     Neo4j - London User Group   2014-06-12 1132
+## 506                     Neo4j - London User Group   2014-06-13 1135
+## 507                     Neo4j - London User Group   2014-06-15 1137
+## 508                     Neo4j - London User Group   2014-06-16 1144
+## 509                     Neo4j - London User Group   2014-06-17 1150
+## 510                     Neo4j - London User Group   2014-06-18 1156
+## 511                     Neo4j - London User Group   2014-06-19 1160
+## 512                     Neo4j - London User Group   2014-06-20 1166
+## 513                     Neo4j - London User Group   2014-06-21 1170
+## 514                     Neo4j - London User Group   2014-06-22 1173
+## 515                     Neo4j - London User Group   2014-06-23 1188
+## 516                     Neo4j - London User Group   2014-06-24 1195
+## 517                     Neo4j - London User Group   2014-06-25 1202
+## 518                     Neo4j - London User Group   2014-06-26 1204
+## 519                     Neo4j - London User Group   2014-06-27 1206
+## 520                     Neo4j - London User Group   2014-06-28 1209
+## 521                     Neo4j - London User Group   2014-06-29 1211
+## 522                     Neo4j - London User Group   2014-06-30 1220
+## 523                     Neo4j - London User Group   2014-07-01 1225
+## 524                     Neo4j - London User Group   2014-07-02 1231
+## 525                     Neo4j - London User Group   2014-07-03 1232
+## 526                     Neo4j - London User Group   2014-07-04 1236
+## 527                     Neo4j - London User Group   2014-07-05 1238
+## 528                     Neo4j - London User Group   2014-07-06 1241
+## 529                     Neo4j - London User Group   2014-07-07 1249
+## 530                     Neo4j - London User Group   2014-07-08 1260
+## 531                     Neo4j - London User Group   2014-07-09 1263
+## 532                     Neo4j - London User Group   2014-07-10 1268
+## 533                     Neo4j - London User Group   2014-07-11 1271
+## 534                     Neo4j - London User Group   2014-07-13 1274
+## 535                     Neo4j - London User Group   2014-07-14 1277
+## 536                     Neo4j - London User Group   2014-07-15 1280
+## 537                     Neo4j - London User Group   2014-07-16 1291
+## 538                     Neo4j - London User Group   2014-07-17 1292
+## 539                     Neo4j - London User Group   2014-07-18 1296
+## 540                     Neo4j - London User Group   2014-07-19 1297
+## 541                     Neo4j - London User Group   2014-07-20 1300
+## 542                     Neo4j - London User Group   2014-07-21 1306
+## 543                     Neo4j - London User Group   2014-07-22 1309
+## 544                     Neo4j - London User Group   2014-07-23 1311
+## 545                     Neo4j - London User Group   2014-07-24 1313
+## 546                     Neo4j - London User Group   2014-07-25 1315
+## 547                     Neo4j - London User Group   2014-07-27 1318
+## 548                     Neo4j - London User Group   2014-07-28 1326
+## 549                     Neo4j - London User Group   2014-07-29 1335
+## 550                     Neo4j - London User Group   2014-07-30 1340
+## 551                     Neo4j - London User Group   2014-07-31 1342
+## 552                     Neo4j - London User Group   2014-08-01 1345
+## 553                     Neo4j - London User Group   2014-08-03 1346
+## 554                     Neo4j - London User Group   2014-08-04 1353
+## 555                     Neo4j - London User Group   2014-08-05 1359
+## 556                     Neo4j - London User Group   2014-08-06 1366
+## 557                     Neo4j - London User Group   2014-08-07 1369
+## 558                     Neo4j - London User Group   2014-08-08 1372
+## 559                     Neo4j - London User Group   2014-08-09 1375
+## 560                     Neo4j - London User Group   2014-08-10 1376
+## 561                     Neo4j - London User Group   2014-08-11 1382
+## 562                     Neo4j - London User Group   2014-08-12 1386
+## 563                     Neo4j - London User Group   2014-08-13 1388
+## 564                     Neo4j - London User Group   2014-08-14 1393
+## 565                     Neo4j - London User Group   2014-08-15 1394
+## 566                     Neo4j - London User Group   2014-08-16 1396
+## 567                     Neo4j - London User Group   2014-08-17 1400
+## 568                     Neo4j - London User Group   2014-08-18 1407
+## 569                     Neo4j - London User Group   2014-08-19 1411
+## 570                     Neo4j - London User Group   2014-08-20 1418
+## 571                     Neo4j - London User Group   2014-08-21 1425
+## 572                     Neo4j - London User Group   2014-08-22 1429
+## 573                     Neo4j - London User Group   2014-08-24 1431
+## 574                     Neo4j - London User Group   2014-08-25 1434
+## 575                     Neo4j - London User Group   2014-08-26 1436
+## 576                     Neo4j - London User Group   2014-08-27 1440
+## 577                     Neo4j - London User Group   2014-08-28 1444
+## 578                     Neo4j - London User Group   2014-08-29 1449
+## 579                     Neo4j - London User Group   2014-08-30 1450
+## 580                     Neo4j - London User Group   2014-09-02 1453
+## 581                     Neo4j - London User Group   2014-09-03 1458
+## 582                     Neo4j - London User Group   2014-09-04 1464
+## 583                     Neo4j - London User Group   2014-09-05 1467
+## 584                     Neo4j - London User Group   2014-09-08 1471
+## 585                     Neo4j - London User Group   2014-09-09 1474
+## 586                     Neo4j - London User Group   2014-09-12 1476
+## 587                     Neo4j - London User Group   2014-09-13 1480
+## 588                     Neo4j - London User Group   2014-09-14 1482
+## 589                     Neo4j - London User Group   2014-09-15 1491
+## 590                     Neo4j - London User Group   2014-09-16 1497
+## 591                     Neo4j - London User Group   2014-09-17 1502
+## 592                     Neo4j - London User Group   2014-09-18 1511
+## 593                     Neo4j - London User Group   2014-09-19 1513
+## 594                     Neo4j - London User Group   2014-09-20 1516
+## 595                     Neo4j - London User Group   2014-09-21 1518
+## 596                     Neo4j - London User Group   2014-09-22 1523
+## 597                     Neo4j - London User Group   2014-09-23 1532
+## 598                     Neo4j - London User Group   2014-09-24 1541
+## 599                     Neo4j - London User Group   2014-09-25 1543
+## 600                     Neo4j - London User Group   2014-09-26 1545
+## 601                     Neo4j - London User Group   2014-09-27 1547
+## 602                     Neo4j - London User Group   2014-09-29 1549
+## 603                     Neo4j - London User Group   2014-09-30 1553
+## 604                     Neo4j - London User Group   2014-10-01 1562
+## 605                     Neo4j - London User Group   2014-10-02 1565
+## 606                     Neo4j - London User Group   2014-10-03 1567
+## 607                     Neo4j - London User Group   2014-10-04 1568
+## 608                     Neo4j - London User Group   2014-10-05 1570
+## 609                     Neo4j - London User Group   2014-10-06 1581
+## 610                     Neo4j - London User Group   2014-10-07 1587
+## 611                     Neo4j - London User Group   2014-10-08 1591
+## 612                     Neo4j - London User Group   2014-10-09 1596
+## 613                     Neo4j - London User Group   2014-10-10 1600
+## 614                     Neo4j - London User Group   2014-10-11 1601
+## 615                     Neo4j - London User Group   2014-10-12 1602
+## 616                     Neo4j - London User Group   2014-10-13 1605
+## 617                     Neo4j - London User Group   2014-10-14 1608
+## 618                     Neo4j - London User Group   2014-10-15 1613
+## 619                     Neo4j - London User Group   2014-10-16 1616
+## 620                     Neo4j - London User Group   2014-10-19 1618
+## 621                     Neo4j - London User Group   2014-10-20 1625
+## 622                     Neo4j - London User Group   2014-10-21 1631
+## 623                     Neo4j - London User Group   2014-10-22 1635
+## 624                     Neo4j - London User Group   2014-10-23 1637
+## 625                     Neo4j - London User Group   2014-10-24 1638
+## 626                     Neo4j - London User Group   2014-10-27 1645
+## 627                     Neo4j - London User Group   2014-10-28 1649
+## 628                     Neo4j - London User Group   2014-10-29 1652
+## 629                     Neo4j - London User Group   2014-10-30 1654
+## 630                     Neo4j - London User Group   2014-10-31 1657
+## 631                     Neo4j - London User Group   2014-11-01 1659
+## 632                     Neo4j - London User Group   2014-11-02 1661
+## 633                     Neo4j - London User Group   2014-11-03 1665
+## 634                     Neo4j - London User Group   2014-11-04 1669
+## 635                     Neo4j - London User Group   2014-11-05 1675
+## 636                     Neo4j - London User Group   2014-11-06 1680
+## 637                     Neo4j - London User Group   2014-11-07 1681
+## 638                     Neo4j - London User Group   2014-11-08 1682
+## 639                     Neo4j - London User Group   2014-11-10 1685
+## 640                     Neo4j - London User Group   2014-11-11 1687
+## 641                     Neo4j - London User Group   2014-11-12 1689
+## 642                     Neo4j - London User Group   2014-11-13 1692
+## 643                     Neo4j - London User Group   2014-11-14 1693
+## 644                     Neo4j - London User Group   2014-11-16 1695
+## 645                     Neo4j - London User Group   2014-11-17 1697
+## 646                     Neo4j - London User Group   2014-11-18 1699
+## 647                     Neo4j - London User Group   2014-11-20 1702
+</code></pre>
+
+</body>
+
+</html>
+

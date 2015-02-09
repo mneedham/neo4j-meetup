@@ -50,7 +50,7 @@ pickRandomRows = function(df, numberOfRows = 10) {
 Let's have a look at the most attended events to get a feel for the data:
 
 ```{r}
-events %>% select(event.name, g.name, rsvps) %>% arrange(desc(rsvps)) %>% pickRandomRows()
+events %>% select(event.name, g.name, rsvps) %>% arrange(desc(rsvps)) %>% sample_n(10)
 ```
 
 Now we'll get back to checking which day of the week people go to meetups on:
@@ -91,6 +91,7 @@ byMonth = events %>%
             count = sum(rsvps)) %>%
   mutate(ave = count / events) %>%
   arrange(desc(ave))
+byMonth
 ```
 
 ```{r fig.width=15, fig.height=10}
@@ -105,3 +106,42 @@ g4 = ggplot(aes(x = month, y = count), data = byMonth) +
 grid.arrange(g3,g4, ncol = 1)
 ```
 
+```{r}
+weather = read.csv("weather/temp_data.csv")
+weather$Date = as.POSIXct(weather$Date)
+
+weather %>% sample_n(10) %>% select(Date, Min_TemperatureC, Mean_TemperatureC, Max_TemperatureC)
+
+averageTemperatureByMonth = weather %>% 
+  mutate(month = factor(format(Date, "%B"), levels=month.name)) %>%
+  group_by(month) %>% 
+  summarise(aveTemperature = mean(Mean_TemperatureC))
+
+g5 = ggplot(aes(x = month, y = aveTemperature, group=1), data = averageTemperatureByMonth) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+
+write.csv(averageTemperatureByMonth, "/tmp/averageTemperatureByMonth.csv", row.names = FALSE)
+
+df = read.csv("/tmp/averageTemperatureByMonth.csv")
+df$month = factor(df$month, month.name)
+
+ggplot(aes(x = month, y = aveTemperature), data = df) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+
+ggplot(aes(x = as.numeric(month), y = aveTemperature), data = df) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+
+ggplot(aes(x = month, y = aveTemperature, group=1), data = df) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+
+
+g6 = ggplot(aes(x = month, y = count, group=1), data = byMonth) + 
+  geom_bar(stat="identity", fill="dark blue") + 
+  ggtitle("Total attendees by month")
+
+grid.arrange(g5,g6, ncol = 1)
+```

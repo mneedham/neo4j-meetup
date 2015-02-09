@@ -1,0 +1,52 @@
+
+```{r message=FALSE}
+setwd("~/projects/neo4j-meetup/rScripts")
+library(weatherData)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+getDetailedWeatherForYear = function(year) {
+  getWeatherForDate("LCY", 
+                    start_date= paste(sep="", year, "-01-01"),
+                    end_date = paste(sep="", year, "-12-31"),
+                    opt_detailed = FALSE,
+                    opt_all_columns = TRUE)
+}
+
+
+df = rbind(getDetailedWeatherForYear(2011), 
+      getDetailedWeatherForYear(2012),
+      getDetailedWeatherForYear(2013),
+      getDetailedWeatherForYear(2014),
+      getWeatherForDate("LCY", start_date="2015-01-01",
+                        end_date = "2015-01-25",
+                        opt_detailed = FALSE,
+                        opt_all_columns = TRUE))
+# 
+# 
+# write.csv(df, 'weather/temp_data.csv', row.names = FALSE)
+
+weather = read.csv("weather/temp_data.csv")
+weather$Date = as.POSIXct(weather$Date)
+
+weather %>% select(Date, Mean_TemperatureC) %>% sample_n(10)
+
+averageTemperatureByMonth = weather %>% 
+  mutate(month = factor(format(Date, "%B"), levels=month.name)) %>%
+  group_by(month) %>% 
+  summarise(aveTemperature = mean(Mean_TemperatureC))
+```
+
+```{r fig.width=15, fig.height=10, warning = FALSE, message = FALSE}
+ggplot(aes(x = month, y = aveTemperature), data = averageTemperatureByMonth) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+
+
+ggplot(aes(x = month, y = aveTemperature, group=1), data = averageTemperatureByMonth) + 
+  geom_line( ) + 
+  ggtitle("Temperature by month")
+```
